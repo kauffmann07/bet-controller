@@ -17,6 +17,8 @@ async function renderHistorico() {
         <button class="btn btn-secondary btn-sm" onclick="exportarCSVClick()">↓ CSV</button>
         <button class="btn btn-secondary btn-sm" onclick="exportarJSONClick()">↓ JSON</button>
         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('import-file').click()">↑ Importar</button>
+        <button class="btn btn-primary btn-sm" onclick="aplicarFiltros()">Filtrar</button>
+        <button class="btn btn-secondary btn-sm" onclick="limparFiltros()">Limpar</button>
         <input type="file" id="import-file" accept=".json" style="display:none" onchange="importarJSONClick(this)">
       </div>
     </div>
@@ -57,6 +59,14 @@ async function renderHistorico() {
         </select>
       </div>
       <div>
+        <label>Time</label>
+        <input type="text" id="filt-time" placeholder="Nome do time" value="${histFiltros.time||''}">
+      </div>
+      <div>
+        <label>Jogador</label>
+        <input type="text" id="filt-jogador" placeholder="Nome do jogador" value="${histFiltros.jogador||''}">
+      </div>
+      <div>
         <label>Tipo</label>
         <select id="filt-tipo-reg">
           <option value="">Todos</option>
@@ -65,8 +75,7 @@ async function renderHistorico() {
         </select>
       </div>
       <div style="display:flex;align-items:flex-end;gap:6px">
-        <button class="btn btn-primary btn-sm" onclick="aplicarFiltros()" style="flex:1">Filtrar</button>
-        <button class="btn btn-secondary btn-sm" onclick="limparFiltros()">✕</button>
+        <div style="font-size:.75rem;color:var(--muted)">Use o botão "Filtrar" no topo para aplicar.</div>
       </div>
     </div>
 
@@ -125,7 +134,8 @@ function aplicarFiltros() {
   histFiltros = {};
   const v = (id) => document.getElementById(id)?.value || undefined;
   const f = { dataInicio: v('filt-inicio'), dataFim: v('filt-fim'), esporte: v('filt-esporte'),
-    liga: v('filt-liga'), resultado: v('filt-resultado'), tag: v('filt-tag'), tipo_registro: v('filt-tipo-reg') };
+    liga: v('filt-liga'), resultado: v('filt-resultado'), tag: v('filt-tag'), tipo_registro: v('filt-tipo-reg'),
+    time: v('filt-time'), jogador: v('filt-jogador') };
   Object.keys(f).forEach(k => { if (f[k]) histFiltros[k] = f[k]; });
   histPagina = 1;
   carregarTabelaHistorico();
@@ -177,6 +187,30 @@ async function carregarTabelaHistorico() {
       const completa = await buscarApostaComSelecoes(a.id);
       a.selecoes = completa?.selecoes || [];
     }
+  }
+
+  // Aplicar filtros por Time e Jogador (caso fornecidos)
+  if (histFiltros.time || histFiltros.jogador) {
+    const qTime = histFiltros.time ? String(histFiltros.time).toLowerCase() : null;
+    const qPlayer = histFiltros.jogador ? String(histFiltros.jogador).toLowerCase() : null;
+    apostas = apostas.filter(a => {
+      // Função para checar se uma string contém a query
+      const has = (val, q) => q && val && String(val).toLowerCase().includes(q);
+
+      // Checar na própria aposta
+      if (qTime && (has(a.time_a, qTime) || has(a.time_b, qTime) || has(a.equipe, qTime))) return true;
+      if (qPlayer && (has(a.jogador, qPlayer))) return true;
+
+      // Checar nas seleções (se presentes)
+      if (a.selecoes && a.selecoes.length) {
+        for (const s of a.selecoes) {
+          if (qTime && (has(s.time_a, qTime) || has(s.time_b, qTime) || has(s.equipe, qTime))) return true;
+          if (qPlayer && has(s.jogador, qPlayer)) return true;
+        }
+      }
+
+      return false;
+    });
   }
 
   apostas = apostas.map(a => ({ ...a, lucro: calcLucro(a) }));
