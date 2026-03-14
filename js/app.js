@@ -1,29 +1,28 @@
-// app.js — Roteador SPA + Utilitários globais
+// app.js — Roteador SPA + Utilitários
 
-// ─── ROTEADOR ───────────────────────────────────────────────────────────────
-const routes = ['dashboard', 'nova-aposta', 'historico', 'analises', 'banca', 'config'];
+const routes = ['dashboard','nova-aposta','historico','analises','banca','config'];
 let rotaAtual = 'dashboard';
 
 function navegar(rota) {
   rotaAtual = rota;
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
-  document.getElementById('sec-' + rota)?.classList.add('active');
+  document.getElementById('sec-'+rota)?.classList.add('active');
   document.querySelector(`.nav-links button[data-rota="${rota}"]`)?.classList.add('active');
   const handlers = {
-    'dashboard': renderDashboard,
-    'historico': renderHistorico,
-    'analises': renderAnalises,
-    'banca': renderBanca,
+    'dashboard':   renderDashboard,
+    'historico':   renderHistorico,
+    'analises':    renderAnalises,
+    'banca':       renderBanca,
     'nova-aposta': () => initForm(),
-    'config': renderConfig
+    'config':      renderConfig
   };
   handlers[rota]?.();
   window.location.hash = rota;
 }
 
 // ─── TOAST ──────────────────────────────────────────────────────────────────
-function toast(msg, tipo = 'success') {
+function toast(msg, tipo='success') {
   const c = document.getElementById('toast-container');
   const t = document.createElement('div');
   t.className = `toast ${tipo}`;
@@ -35,55 +34,75 @@ function toast(msg, tipo = 'success') {
 
 // ─── FORMATAÇÃO ─────────────────────────────────────────────────────────────
 function fmtMoeda(v) {
-  const n = Number(v) || 0;
-  return (n >= 0 ? '+' : '') + n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const n = Number(v)||0;
+  return (n>=0?'+':'') + n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 }
 function fmtMoedaSimples(v) {
-  return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 }
-function fmtPct(v) { return (Number(v) || 0).toFixed(1) + '%'; }
-function fmtOdd(v) { return Number(v || 0).toFixed(2); }
+function fmtPct(v)  { return (Number(v)||0).toFixed(1)+'%'; }
+function fmtOdd(v)  { return Number(v||0).toFixed(2); }
 function fmtData(d) {
   if (!d) return '—';
-  return new Date(d).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+  return new Date(d).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
 }
 function fmtDataHora(d) {
   if (!d) return '—';
-  return new Date(d).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+  return new Date(d).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
 }
 function classeResultado(r) {
-  return { win:'badge-win', loss:'badge-loss', void:'badge-void', cashout:'badge-cashout', pendente:'badge-pendente' }[r] || 'badge-pendente';
+  return {win:'badge-win',loss:'badge-loss',void:'badge-void',cashout:'badge-cashout',pendente:'badge-pendente'}[r]||'badge-pendente';
 }
 function labelResultado(r) {
-  return { win:'WIN', loss:'LOSS', void:'VOID', cashout:'CASHOUT', pendente:'PENDENTE' }[r] || '—';
+  return {win:'WIN',loss:'LOSS',void:'VOID',cashout:'CASHOUT',pendente:'PENDENTE'}[r]||'—';
 }
-function calcLucro(aposta) {
-  if (aposta.resultado === 'win') return ((aposta.odd_total || aposta.odd || 1) - 1) * (aposta.stake || 0);
-  if (aposta.resultado === 'loss') return -(aposta.stake || 0);
-  if (aposta.resultado === 'cashout') return (aposta.lucro_cashout || 0) - (aposta.stake || 0);
+function calcLucro(a) {
+  if (a.resultado==='win')     return ((a.odd_total||a.odd||1)-1)*(a.stake||0);
+  if (a.resultado==='loss')    return -(a.stake||0);
+  if (a.resultado==='cashout') return (a.lucro_cashout||0)-(a.stake||0);
   return 0;
 }
 
 // ─── MODAL ──────────────────────────────────────────────────────────────────
-function abrirModal(id) { document.getElementById(id)?.classList.add('open'); }
+function abrirModal(id)  { document.getElementById(id)?.classList.add('open'); }
 function fecharModal(id) { document.getElementById(id)?.classList.remove('open'); }
 
-// ─── INICIALIZAÇÃO ───────────────────────────────────────────────────────────
+// ─── CHARTS DEFAULTS ────────────────────────────────────────────────────────
+function chartDefaults(extraScales={}) {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#fff', titleColor: '#111827', bodyColor: '#5c6473',
+        borderColor: '#dde0e6', borderWidth: 1,
+        padding: 10
+      }
+    },
+    scales: {
+      x: { grid: { color: '#f0f1f3' }, ticks: { color: '#9ba3b0', font: { family: 'JetBrains Mono', size: 10 } } },
+      y: { grid: { color: '#f0f1f3' }, ticks: { color: '#9ba3b0', font: { family: 'JetBrains Mono', size: 10 } }, ...extraScales.y },
+      ...extraScales
+    }
+  };
+}
+
+function destroyChart(id) {
+  window._charts = window._charts||{};
+  if (window._charts[id]) { window._charts[id].destroy(); delete window._charts[id]; }
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
 async function init() {
-  // Bind nav
   document.querySelectorAll('.nav-links button[data-rota]').forEach(btn => {
     btn.addEventListener('click', () => navegar(btn.dataset.rota));
   });
-  // Fechar modais no overlay
   document.querySelectorAll('.modal-overlay').forEach(m => {
-    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+    m.addEventListener('click', e => { if (e.target===m) m.classList.remove('open'); });
   });
-  // Atualizar saldo na nav
   window.addEventListener('bankroll-updated', atualizarSaldoNav);
   await atualizarSaldoNav();
-
-  // Rota inicial via hash
-  const hash = window.location.hash.replace('#', '');
+  const hash = window.location.hash.replace('#','');
   navegar(routes.includes(hash) ? hash : 'dashboard');
 }
 
