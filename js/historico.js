@@ -74,9 +74,6 @@ async function renderHistorico() {
           <option value="acumulada" ${histFiltros.tipo_registro==='acumulada'?'selected':''}>Acumulada</option>
         </select>
       </div>
-      <div style="display:flex;align-items:flex-end;gap:6px">
-        <div style="font-size:.75rem;color:var(--muted)">Use o botão "Filtrar" no topo para aplicar.</div>
-      </div>
     </div>
 
     <div class="card" style="padding:0;overflow:hidden">
