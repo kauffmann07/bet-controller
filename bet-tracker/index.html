@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BetTracker — Controle de Apostas</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Libs -->
+  <script src="https://cdn.jsdelivr.net/npm/dexie@3/dist/dexie.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div id="app">
+
+  <!-- NAVBAR -->
+  <nav id="nav">
+    <div class="logo">BET<span>TRACKER</span></div>
+    <div class="nav-links">
+      <button data-rota="dashboard">Dashboard</button>
+      <button data-rota="nova-aposta">+ Nova Aposta</button>
+      <button data-rota="historico">Histórico</button>
+      <button data-rota="analises">Análises</button>
+      <button data-rota="banca">Banca</button>
+      <button data-rota="config">Config</button>
+    </div>
+    <div class="saldo-nav">
+      <span style="color:var(--muted);font-size:.72rem">SALDO</span>
+      <span class="val" id="nav-saldo">R$ —</span>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main id="main">
+
+    <!-- Dashboard -->
+    <section id="sec-dashboard" class="section">
+      <div style="text-align:center;padding:60px;color:var(--muted)">Carregando...</div>
+    </section>
+
+    <!-- Nova Aposta -->
+    <section id="sec-nova-aposta" class="section">
+      <div style="text-align:center;padding:60px;color:var(--muted)">Carregando...</div>
+    </section>
+
+    <!-- Histórico -->
+    <section id="sec-historico" class="section">
+      <div style="text-align:center;padding:60px;color:var(--muted)">Carregando...</div>
+    </section>
+
+    <!-- Análises -->
+    <section id="sec-analises" class="section">
+      <div style="text-align:center;padding:60px;color:var(--muted)">Carregando...</div>
+    </section>
+
+    <!-- Banca -->
+    <section id="sec-banca" class="section">
+      <div style="text-align:center;padding:60px;color:var(--muted)">Carregando...</div>
+    </section>
+
+    <!-- Config -->
+    <section id="sec-config" class="section">
+      <div style="text-align:center;padding:60px;color:var(--muted)">Carregando...</div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- Scripts: ordem importa -->
+<script src="data/esportes.js"></script>
+<script src="js/db.js"></script>
+<script src="js/app.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/form.js"></script>
+<script src="js/historico.js"></script>
+<script src="js/analises.js"></script>
+<script src="js/banca.js"></script>
+
+</body>
+</html>
