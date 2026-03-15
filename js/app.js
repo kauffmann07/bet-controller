@@ -76,12 +76,14 @@ function chartDefaults(extraScales={}) {
       tooltip: {
         backgroundColor: '#fff', titleColor: '#111827', bodyColor: '#5c6473',
         borderColor: '#dde0e6', borderWidth: 1,
-        padding: 10
+        padding: 10, displayColors: false, cornerRadius: 8,
+        titleFont: { family: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial', weight: '600' },
+        bodyFont: { family: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }
       }
     },
     scales: {
-      x: { grid: { color: '#f0f1f3' }, ticks: { color: '#9ba3b0', font: { family: 'JetBrains Mono', size: 10 } } },
-      y: { grid: { color: '#f0f1f3' }, ticks: { color: '#9ba3b0', font: { family: 'JetBrains Mono', size: 10 } }, ...extraScales.y },
+      x: { grid: { color: '#f0f1f3' }, ticks: { color: '#9ba3b0', font: { family: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto', size: 11 } } },
+      y: { grid: { color: '#f0f1f3' }, ticks: { color: '#9ba3b0', font: { family: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto', size: 11 } }, ...extraScales.y },
       ...extraScales
     }
   };

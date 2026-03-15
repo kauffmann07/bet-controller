@@ -282,6 +282,7 @@ async function carregarTabelaHistorico() {
         <td><div class="acoes-td">
           <button class="btn btn-ghost btn-sm btn-icon" title="Editar" onclick="editarAposta(${a.id})">✎</button>
           <button class="btn btn-danger btn-sm btn-icon" title="Excluir" onclick="excluirApostaClick(${a.id})">✕</button>
+          ${a.resultado === 'pendente' ? `<button class="btn btn-ghost btn-sm btn-icon" title="Encerrar (registrar cashout)" onclick="encerrarApostaClick(${a.id})">⇄</button>` : ''}
         </div></td>
       </tr>`;
     }).join('');
@@ -352,6 +353,23 @@ async function verSelecoes(id) {
       }).join('')}`;
   }
   abrirModal('modal-selecoes');
+}
+
+async function encerrarApostaClick(id) {
+  const aposta = await buscarApostaComSelecoes(id);
+  if (!aposta) return;
+  const recebidoStr = prompt('Valor recebido ao encerrar a aposta (R$):', aposta.lucro_cashout || '');
+  if (recebidoStr === null) return; // cancelado
+  const recebido = parseFloat(recebidoStr.replace(',', '.'));
+  if (isNaN(recebido)) { toast('Valor inválido', 'error'); return; }
+  try {
+    await atualizarAposta(id, { ...aposta, resultado: 'cashout', lucro_cashout: recebido });
+    toast('Aposta encerrada (cashout) registrada');
+    carregarTabelaHistorico();
+  } catch (e) {
+    console.error(e);
+    toast('Erro ao encerrar aposta: ' + e.message, 'error');
+  }
 }
 
 async function exportarCSVClick() {

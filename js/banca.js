@@ -3,10 +3,6 @@
 async function renderBanca() {
   const saldo = await getSaldoAtual();
   const bancaInicial = await getConfig('bankroll_inicial') || 0;
-  const stopLossDiario = await getConfig('stop_loss_diario') || 0;
-  const stopLossMensal = await getConfig('stop_loss_mensal') || 0;
-  const metaMensal = await getConfig('meta_mensal') || 0;
-  const pctMaxAposta = await getConfig('pct_max_aposta') || 5;
   const movimentos = await buscarMovimentosBankroll();
 
   // Calcular lucro do mês
@@ -14,22 +10,11 @@ async function renderBanca() {
   const statsMes = await getEstatisticasGerais({ dataInicio: inicioMes.toISOString().split('T')[0] });
   const statsHoje = await getEstatisticasGerais({ dataInicio: new Date().toISOString().split('T')[0] });
 
-  // Alertas
+  // Alertas (mantemos apenas alertas de sequência negativa)
   const alertas = [];
-  if (stopLossDiario > 0 && statsHoje.lucroTotal < 0 && Math.abs(statsHoje.lucroTotal) >= stopLossDiario) {
-    alertas.push({ tipo: 'danger', msg: `STOP LOSS DIÁRIO atingido! Prejuízo de ${fmtMoedaSimples(Math.abs(statsHoje.lucroTotal))} hoje.` });
-  }
-  if (stopLossMensal > 0 && statsMes.lucroTotal < 0 && Math.abs(statsMes.lucroTotal) >= stopLossMensal) {
-    alertas.push({ tipo: 'danger', msg: `STOP LOSS MENSAL atingido! Prejuízo de ${fmtMoedaSimples(Math.abs(statsMes.lucroTotal))} este mês.` });
-  }
   if (statsMes.streak >= 4 && statsMes.streakTipo === 'loss') {
     alertas.push({ tipo: 'warn', msg: `Sequência de ${statsMes.streak} derrotas consecutivas. Considere uma pausa.` });
   }
-  if (metaMensal > 0 && statsMes.lucroTotal >= metaMensal) {
-    alertas.push({ tipo: 'ok', msg: `Meta mensal atingida! ${fmtMoedaSimples(statsMes.lucroTotal)} de ${fmtMoedaSimples(metaMensal)}.` });
-  }
-
-  const stakeRecomendada = saldo * (pctMaxAposta / 100);
 
   const sec = document.getElementById('sec-banca');
   sec.innerHTML = `
@@ -40,7 +25,7 @@ async function renderBanca() {
 
     ${alertas.map(a => `<div class="alerta alerta-${a.tipo}">${a.msg}</div>`).join('')}
 
-    <div class="grid-4 mb-16">
+    <div class="grid-3 mb-16">
       <div class="card card-sm">
         <div class="card-title">Saldo atual</div>
         <div class="card-value ${saldo >= bancaInicial ? 'pos' : 'neg'}">${fmtMoedaSimples(saldo)}</div>
@@ -49,74 +34,12 @@ async function renderBanca() {
       <div class="card card-sm">
         <div class="card-title">Lucro hoje</div>
         <div class="card-value ${statsHoje.lucroTotal >= 0 ? 'pos' : 'neg'}" style="font-size:1.3rem">${fmtMoeda(statsHoje.lucroTotal)}</div>
-        <div class="card-sub">Stop diário: ${stopLossDiario > 0 ? fmtMoedaSimples(stopLossDiario) : 'Não definido'}</div>
+        <div class="card-sub">Atualizado</div>
       </div>
       <div class="card card-sm">
         <div class="card-title">Lucro mensal</div>
         <div class="card-value ${statsMes.lucroTotal >= 0 ? 'pos' : 'neg'}" style="font-size:1.3rem">${fmtMoeda(statsMes.lucroTotal)}</div>
-        <div class="card-sub">Meta: ${metaMensal > 0 ? fmtMoedaSimples(metaMensal) : 'Não definida'}</div>
-      </div>
-      <div class="card card-sm">
-        <div class="card-title">Stake recomendada (${pctMaxAposta}%)</div>
-        <div class="card-value" style="font-size:1.3rem">${fmtMoedaSimples(stakeRecomendada)}</div>
-        <div class="card-sub">Baseada no saldo atual</div>
-      </div>
-    </div>
-
-    <div class="grid-2 mb-16">
-      <!-- Calculadora de stake -->
-      <div class="card">
-        <div class="card-title mb-16">Calculadora de stake</div>
-        <div class="form-row cols-2">
-          <div class="form-group">
-            <label>Saldo de referência (R$)</label>
-            <input type="number" id="calc-saldo" step="0.01" value="${saldo.toFixed(2)}" oninput="calcStake()">
-          </div>
-          <div class="form-group">
-            <label>% da banca</label>
-            <input type="number" id="calc-pct" step="0.5" min="0.5" max="20" value="${pctMaxAposta}" oninput="calcStake()">
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Odd da aposta</label>
-          <input type="number" id="calc-odd" step="0.01" min="1.01" value="2.00" oninput="calcStake()">
-        </div>
-        <div id="calc-resultado" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:8px">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:.78rem">
-            <div><div class="card-title">Stake</div><div class="text-bright" id="calc-stake-val">—</div></div>
-            <div><div class="card-title">Retorno potencial</div><div class="text-green" id="calc-retorno-val">—</div></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Configurações de limites -->
-      <div class="card">
-        <div class="card-title mb-16">Limites e metas</div>
-        <div class="form-group">
-          <label>Banca inicial (R$)</label>
-          <input type="number" id="cfg-banca-ini" step="0.01" value="${bancaInicial}">
-        </div>
-        <div class="form-row cols-2">
-          <div class="form-group">
-            <label>Stop loss diário (R$)</label>
-            <input type="number" id="cfg-stop-diario" step="0.01" value="${stopLossDiario}">
-          </div>
-          <div class="form-group">
-            <label>Stop loss mensal (R$)</label>
-            <input type="number" id="cfg-stop-mensal" step="0.01" value="${stopLossMensal}">
-          </div>
-        </div>
-        <div class="form-row cols-2">
-          <div class="form-group">
-            <label>Meta de lucro mensal (R$)</label>
-            <input type="number" id="cfg-meta-mensal" step="0.01" value="${metaMensal}">
-          </div>
-          <div class="form-group">
-            <label>% máximo por aposta</label>
-            <input type="number" id="cfg-pct-max" step="0.5" min="0.5" max="20" value="${pctMaxAposta}">
-          </div>
-        </div>
-        <button class="btn btn-primary btn-sm" onclick="salvarConfigBanca()">Salvar limites</button>
+        <div class="card-sub">Mês atual</div>
       </div>
     </div>
 
@@ -176,30 +99,10 @@ async function renderBanca() {
     </div>
   `;
 
-  calcStake();
+  // removed stake calculator
 }
-
-function calcStake() {
-  const saldo = parseFloat(document.getElementById('calc-saldo')?.value) || 0;
-  const pct = parseFloat(document.getElementById('calc-pct')?.value) || 0;
-  const odd = parseFloat(document.getElementById('calc-odd')?.value) || 0;
-  const stake = saldo * (pct / 100);
-  const retorno = stake * odd;
-  const stakeEl = document.getElementById('calc-stake-val');
-  const retornoEl = document.getElementById('calc-retorno-val');
-  if (stakeEl) stakeEl.textContent = fmtMoedaSimples(stake);
-  if (retornoEl) retornoEl.textContent = fmtMoedaSimples(retorno) + ` (+${fmtMoedaSimples(retorno - stake)})`;
-}
-
 async function salvarConfigBanca() {
-  await setConfig('bankroll_inicial', parseFloat(document.getElementById('cfg-banca-ini')?.value) || 0);
-  await setConfig('stop_loss_diario', parseFloat(document.getElementById('cfg-stop-diario')?.value) || 0);
-  await setConfig('stop_loss_mensal', parseFloat(document.getElementById('cfg-stop-mensal')?.value) || 0);
-  await setConfig('meta_mensal', parseFloat(document.getElementById('cfg-meta-mensal')?.value) || 0);
-  await setConfig('pct_max_aposta', parseFloat(document.getElementById('cfg-pct-max')?.value) || 5);
-  await recalcularBankroll();
-  toast('Configurações salvas!');
-  renderBanca();
+  // function removed: salvarConfigBanca (limits & metas removed)
 }
 
 async function salvarMovimento() {

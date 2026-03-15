@@ -72,51 +72,83 @@ async function carregarAnalises(dias) {
   if (!el) return;
 
   el.innerHTML = `
-    <!-- KPIs -->
-    <div class="grid-4 mb-16">
-      <div class="card card-sm">
-        <div class="card-title">Total apostas</div>
-        <div class="card-value">${stats.total}</div>
-        <div class="card-sub">${stats.wins}W · ${stats.losses}L · ${stats.voids}V</div>
+    <!-- KPIs (Bootstrap cards) -->
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-body p-3 text-center">
+            <h6 class="card-subtitle mb-2 text-muted">Total apostas</h6>
+            <div class="h4 mb-1">${stats.total}</div>
+            <div class="text-muted small">${stats.wins}W · ${stats.losses}L · ${stats.voids}V</div>
+          </div>
+        </div>
       </div>
-      <div class="card card-sm">
-        <div class="card-title">Win rate</div>
-        <div class="card-value ${stats.winRate >= 50 ? 'pos' : 'neg'}">${fmtPct(stats.winRate)}</div>
-        <div class="card-sub">Stake total: ${fmtMoedaSimples(stats.totalStake)}</div>
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-body p-3 text-center">
+            <h6 class="card-subtitle mb-2 text-muted">Win rate</h6>
+            <div class="h4 mb-1 ${stats.winRate >= 50 ? 'text-success' : 'text-danger'}">${fmtPct(stats.winRate)}</div>
+            <div class="text-muted small">Stake total: ${fmtMoedaSimples(stats.totalStake)}</div>
+          </div>
+        </div>
       </div>
-      <div class="card card-sm">
-        <div class="card-title">ROI</div>
-        <div class="card-value ${stats.roi >= 0 ? 'pos' : 'neg'}">${fmtPct(stats.roi)}</div>
-        <div class="card-sub">Odd média: ${fmtOdd(stats.oddMedia)}</div>
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-body p-3 text-center">
+            <h6 class="card-subtitle mb-2 text-muted">ROI</h6>
+            <div class="h4 mb-1 ${stats.roi >= 0 ? 'text-success' : 'text-danger'}">${fmtPct(stats.roi)}</div>
+            <div class="text-muted small">Odd média: ${fmtOdd(stats.oddMedia)}</div>
+          </div>
+        </div>
       </div>
-      <div class="card card-sm">
-        <div class="card-title">Lucro total</div>
-        <div class="card-value ${stats.lucroTotal >= 0 ? 'pos' : 'neg'}">${fmtMoeda(stats.lucroTotal)}</div>
-        <div class="card-sub">Streak: ${stats.streakTipo === 'win' ? '+' : '-'}${stats.streak}</div>
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-body p-3 text-center">
+            <h6 class="card-subtitle mb-2 text-muted">Lucro total</h6>
+            <div class="h4 mb-1 ${stats.lucroTotal >= 0 ? 'text-success' : 'text-danger'}">${fmtMoeda(stats.lucroTotal)}</div>
+            <div class="text-muted small">Streak: ${stats.streakTipo === 'win' ? '+' : '-'}${stats.streak}</div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Gráficos de evolução -->
-    <div class="grid-2 mb-16">
-      <div class="card">
-        <div class="card-title">Evolução do bankroll</div>
-        <div class="chart-wrap" style="height:220px"><canvas id="anal-bankroll"></canvas></div>
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-body p-3">
+            <h5 class="card-title small mb-3">Evolução do bankroll</h5>
+            <div class="chart-wrap" style="height:220px"><canvas id="anal-bankroll"></canvas></div>
+          </div>
+        </div>
       </div>
-      <div class="card">
-        <div class="card-title">Lucro acumulado por dia</div>
-        <div class="chart-wrap" style="height:220px"><canvas id="anal-lucro-acum"></canvas></div>
+      <div class="col-12 col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-body p-3">
+            <h5 class="card-title small mb-3">Lucro acumulado por dia</h5>
+            <div class="chart-wrap" style="height:220px"><canvas id="anal-lucro-acum"></canvas></div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Por esporte e tipo -->
-    <div class="grid-2 mb-16">
-      <div class="card">
-        <div class="card-title">ROI por esporte</div>
-        <div class="chart-wrap" style="height:200px"><canvas id="anal-esporte-roi"></canvas></div>
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-body p-3">
+            <h5 class="card-title small mb-3">ROI por esporte</h5>
+            <div class="chart-wrap" style="height:200px"><canvas id="anal-esporte-roi"></canvas></div>
+          </div>
+        </div>
       </div>
-      <div class="card">
-        <div class="card-title">Win rate por tipo de aposta (top 8)</div>
-        <div class="chart-wrap" style="height:200px"><canvas id="anal-tipo-wr"></canvas></div>
+      <div class="col-12 col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-body p-3">
+            <h5 class="card-title small mb-3">Win rate por tipo de aposta (top 8)</h5>
+            <div class="chart-wrap" style="height:200px"><canvas id="anal-tipo-wr"></canvas></div>
+          </div>
+        </div>
       </div>
     </div>
 
