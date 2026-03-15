@@ -230,17 +230,43 @@ async function getLucroPorDia(dias = 30) {
 }
 
 async function getEvolucaoBankroll() {
-  const apostas = (await db.apostas.orderBy('data').toArray())
-    .filter(a => a.resultado && a.resultado !== 'pendente');
+  // Evolução baseada em movimentos de banca + apostas resolvidas.
+  const todas = await db.apostas.orderBy('data').toArray();
+  const apostas = todas.filter(a => a.resultado && a.resultado !== 'pendente');
   const cfg = await db.config.get('bankroll_inicial');
+  const movimentos = await db.bankroll.toArray();
+  const movimentosExtra = (movimentos || []).reduce((sum, m) => {
+    if (m.tipo === 'deposito') return sum + m.valor;
+    if (m.tipo === 'saque') return sum - m.valor;
+    return sum;
+  }, 0);
   let saldo = cfg ? cfg.valor : 0;
-  const pontos = [{ data: 'Início', saldo }];
+  // aplicar movimentos iniciais (depositos/saques) ao saldo inicial
+  saldo += movimentosExtra;
+  const pontos = [];
+  // ponto inicial (config/data do primeiro registro) — opcional, podemos omitir 'Início'
+  pontos.push({ data: 'Início', saldo: parseFloat(saldo.toFixed(2)) });
+
   for (const a of apostas) {
     if (a.resultado === 'win') saldo += ((a.odd_total || a.odd || 1) - 1) * (a.stake || 0);
     if (a.resultado === 'loss') saldo -= (a.stake || 0);
     if (a.resultado === 'cashout') saldo += (a.lucro_cashout || 0) - (a.stake || 0);
     pontos.push({ data: a.data.split('T')[0], saldo: parseFloat(saldo.toFixed(2)) });
   }
+
+  // adicionar ponto atual para refletir saldo total (saldo disponível + stakes abertas)
+  try {
+    const hoje = new Date().toISOString().split('T')[0];
+    // se já houver um ponto com a mesma data do último, atualize-o; caso contrário, adicione
+    const ultimo = pontos.length ? pontos[pontos.length-1] : null;
+    const saldoAtualTotal = parseFloat(saldo.toFixed(2));
+    if (ultimo && ultimo.data === hoje) {
+      ultimo.saldo = saldoAtualTotal;
+    } else {
+      pontos.push({ data: hoje, saldo: saldoAtualTotal });
+    }
+  } catch (e) { /* ignore */ }
+
   return pontos;
 }
 

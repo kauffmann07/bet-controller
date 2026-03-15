@@ -37,7 +37,7 @@ async function renderDashboard() {
     <div class="grid-5 mb-16">
       <div class="card card-sm">
         <div class="card-title">Saldo atual</div>
-        <div class="card-value ${saldo >= 0 ? 'pos' : 'neg'}">${fmtMoedaSimples(saldo)}</div>
+        <div class="card-value ${saldo >= 0 ? 'pos' : 'neg'}" title="Saldo atual: ${fmtMoedaSimples(saldo)} · ${ESPORTES?.f1?.emoji || ''} ${ESPORTES?.f1?.nome || ''}">${fmtMoedaSimples(saldo)}</div>
       </div>
       <div class="card card-sm">
         <div class="card-title">Win rate</div>
@@ -60,17 +60,17 @@ async function renderDashboard() {
     <div class="grid-5 mb-16">
       <div class="card card-sm col-span-2">
         <div class="card-title">Lucro hoje</div>
-        <div class="card-value ${statsHoje.lucroTotal >= 0 ? 'pos' : 'neg'}" style="font-size:1.2rem">${fmtMoeda(statsHoje.lucroTotal)}</div>
+        <div class="card-value ${statsHoje.lucroTotal >= 0 ? 'pos' : 'neg'}">${fmtMoeda(statsHoje.lucroTotal)}</div>
         <div class="card-sub">${statsHoje.total} apostas · ${fmtPct(statsHoje.winRate)} WR</div>
       </div>
       <div class="card card-sm col-span-2">
         <div class="card-title">Lucro últimos 7 dias</div>
-        <div class="card-value ${stats7d.lucroTotal >= 0 ? 'pos' : 'neg'}" style="font-size:1.2rem">${fmtMoeda(stats7d.lucroTotal)}</div>
+        <div class="card-value ${stats7d.lucroTotal >= 0 ? 'pos' : 'neg'}">${fmtMoeda(stats7d.lucroTotal)}</div>
         <div class="card-sub">${stats7d.total} apostas · ${fmtPct(stats7d.winRate)} WR</div>
       </div>
       <div class="card card-sm">
         <div class="card-title">Lucro últimos 30 dias</div>
-        <div class="card-value ${stats30d.lucroTotal >= 0 ? 'pos' : 'neg'}" style="font-size:1.2rem">${fmtMoeda(stats30d.lucroTotal)}</div>
+        <div class="card-value ${stats30d.lucroTotal >= 0 ? 'pos' : 'neg'}">${fmtMoeda(stats30d.lucroTotal)}</div>
         <div class="card-sub">${stats30d.total} apostas · ${fmtPct(stats30d.winRate)} WR</div>
       </div>
     </div>
@@ -82,7 +82,7 @@ async function renderDashboard() {
         <div class="chart-wrap" style="height:180px"><canvas id="chart-bankroll"></canvas></div>
       </div>
       <div class="card">
-        <div class="card-title">Lucro diário (30 dias)</div>
+        <div class="card-title">Lucro diário (últimos 30 dias)</div>
         <div class="chart-wrap" style="height:180px"><canvas id="chart-lucro-diario"></canvas></div>
       </div>
     </div>
@@ -140,15 +140,28 @@ function renderChartBankroll(pontos) {
   const ctx = document.getElementById('chart-bankroll');
   if (!ctx) return;
   destroyChart('chart-bankroll');
-  const labels = pontos.map(p => p.data);
-  const data = pontos.map(p => p.saldo);
-  const color = data[data.length-1] >= data[0] ? '#00e676' : '#ff4d6d';
+  // ensure points are sorted by date and formatted correctly
+  const sorted = (pontos || []).slice().sort((a,b) => (a.data || '').localeCompare(b.data || ''));
+  // if final point label is 'Início', try to replace with a readable start date if available
+  if (sorted.length && sorted[0].data === 'Início') {
+    // attempt to find first real date later in the list
+    const firstReal = sorted.find(p => p.data && p.data !== 'Início' && p.data.length >= 8);
+    if (firstReal) sorted[0].data = firstReal.data;
+  }
+  const labels = sorted.map(p => p.data);
+  const data = sorted.map(p => p.saldo);
+  const color = data.length > 1 && data[data.length-1] >= data[0] ? '#00e676' : '#ff4d6d';
   window._charts = window._charts || {};
   window._charts['chart-bankroll'] = new Chart(ctx, {
     type: 'line',
     data: { labels, datasets: [{ data, borderColor: color, borderWidth: 2, fill: true,
       backgroundColor: color + '15', pointRadius: 0, tension: 0.3 }] },
-    options: chartDefaults({ y: { ticks: { callback: v => 'R$' + v.toFixed(0) } } })
+    options: (() => {
+      const opts = chartDefaults({ y: { ticks: { callback: v => 'R$' + v.toFixed(0) } } });
+      opts.plugins = opts.plugins || {};
+      opts.plugins.tooltip = { ...opts.plugins.tooltip, callbacks: { label: ctx => 'Saldo: R$' + Number(ctx.parsed.y).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) } };
+      return opts;
+    })()
   });
 }
 

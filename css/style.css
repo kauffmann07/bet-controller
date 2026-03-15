@@ -138,11 +138,20 @@ label { display: block; font-size: .72rem; color: var(--text2); margin-bottom: 4
   margin-bottom: 8px;
   font-weight: 600;
 }
-.card-value { font-family: var(--font-ui); font-size: 1.6rem; font-weight: 700; color: var(--bright); line-height: 1.2; }
+.card-value { font-family: var(--font-ui); font-size: 1.4rem; font-weight: 700; color: var(--bright); line-height: 1.2; }
+.card.card-sm .card-value { font-size: 1.4rem; }
+/* Make slightly larger values for wider cards (eg. col-span-2) to keep visual hierarchy */
+.col-span-2 .card-value { font-size: 1.7rem; }
 .card-value.pos { color: var(--green); }
 .card-value.neg { color: var(--red); }
 .card-value.warn { color: var(--amber); }
 .card-sub { font-size: .72rem; color: var(--muted); margin-top: 4px; }
+
+/* Compact KPI cards used in Análises */
+.kpi { padding: 12px; text-align: left; }
+.kpi .card-title { font-size: .66rem; color: var(--muted); margin-bottom: 6px; }
+.kpi .card-value { font-size: 1.1rem; }
+.kpi .card-sub { font-size: .68rem; color: var(--muted); }
 
 /* ─── GRID ──────────────────────────────────────────────────── */
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }

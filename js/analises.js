@@ -16,7 +16,7 @@ async function renderAnalises() {
           <option value="90">Últimos 90 dias</option>
           <option value="180">Últimos 6 meses</option>
           <option value="365">Último ano</option>
-          <option value="-1">Tudo</option>
+            <option value="-1" selected>Tudo</option>
         </select>
       </div>
     </div>
@@ -66,6 +66,10 @@ async function carregarAnalises(dias) {
 
   const stats = calcularEstatisticas(apostas);
 
+  // filtrar ligas para futebol quando possível
+  const futebolLigas = (window.FUTEBOL_LIGAS || []).map(x => (x||'').toLowerCase());
+  const statsLigaFiltrada = (statsLiga || []).filter(l => futebolLigas.includes((l.nome||'').toLowerCase()));
+
   // Análise por faixa de odd
   const faixasOdd = [
     { label: '1.01–1.50', min: 1.01, max: 1.50 },
@@ -87,61 +91,47 @@ async function carregarAnalises(dias) {
   if (!el) return;
 
   el.innerHTML = `
-    <!-- KPIs (Bootstrap cards) -->
+    <!-- KPIs (compact row) -->
+    <div class="grid-3 mb-4">
+      <div class="card card-sm h-100 kpi">
+        <div class="card-title">Win rate</div>
+        <div class="card-value ${stats.winRate >= 50 ? 'pos' : 'neg'}">${fmtPct(stats.winRate)}</div>
+        <div class="card-sub">Stake total: ${fmtMoedaSimples(stats.totalStake)}</div>
+      </div>
+      <div class="card card-sm h-100 kpi">
+        <div class="card-title">ROI</div>
+        <div class="card-value ${stats.roi >= 0 ? 'pos' : 'neg'}">${fmtPct(stats.roi)}</div>
+        <div class="card-sub">Odd média: ${fmtOdd(stats.oddMedia)}</div>
+      </div>
+      <div class="card card-sm h-100 kpi">
+        <div class="card-title">Lucro total</div>
+        <div class="card-value ${stats.lucroTotal >= 0 ? 'pos' : 'neg'}">${fmtMoeda(stats.lucroTotal)}</div>
+        <div class="card-sub">Streak: ${stats.streakTipo === 'win' ? '+' : '-'}${stats.streak}</div>
+      </div>
+    </div>
+
+    <!-- Lucro acumulado por dia (ocupando largura total) -->
     <div class="row g-3 mb-4">
-      <div class="col-12 col-sm-6 col-md-3">
-        <div class="card shadow-sm h-100">
-          <div class="card-body p-3 text-center">
-            <h6 class="card-subtitle mb-2 text-muted">Total apostas</h6>
-            <div class="h4 mb-1">${stats.total}</div>
-            <div class="text-muted small">${stats.wins}W · ${stats.losses}L · ${stats.voids}V</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <div class="card shadow-sm h-100">
-          <div class="card-body p-3 text-center">
-            <h6 class="card-subtitle mb-2 text-muted">Win rate</h6>
-            <div class="h4 mb-1 ${stats.winRate >= 50 ? 'text-success' : 'text-danger'}">${fmtPct(stats.winRate)}</div>
-            <div class="text-muted small">Stake total: ${fmtMoedaSimples(stats.totalStake)}</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <div class="card shadow-sm h-100">
-          <div class="card-body p-3 text-center">
-            <h6 class="card-subtitle mb-2 text-muted">ROI</h6>
-            <div class="h4 mb-1 ${stats.roi >= 0 ? 'text-success' : 'text-danger'}">${fmtPct(stats.roi)}</div>
-            <div class="text-muted small">Odd média: ${fmtOdd(stats.oddMedia)}</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <div class="card shadow-sm h-100">
-          <div class="card-body p-3 text-center">
-            <h6 class="card-subtitle mb-2 text-muted">Lucro total</h6>
-            <div class="h4 mb-1 ${stats.lucroTotal >= 0 ? 'text-success' : 'text-danger'}">${fmtMoeda(stats.lucroTotal)}</div>
-            <div class="text-muted small">Streak: ${stats.streakTipo === 'win' ? '+' : '-'}${stats.streak}</div>
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-body p-3">
+            <h5 class="card-title small mb-3">Lucro acumulado por dia</h5>
+            <div class="chart-wrap" style="height:220px"><canvas id="anal-lucro-acum"></canvas></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Gráficos de evolução -->
+    <!-- Total de apostas por esporte (mais atraente que o KPI simples) -->
     <div class="row g-3 mb-4">
-      <div class="col-12 col-md-6">
+      <div class="col-12">
         <div class="card shadow-sm">
           <div class="card-body p-3">
-            <h5 class="card-title small mb-3">Evolução da banca</h5>
-            <div class="chart-wrap" style="height:220px"><canvas id="anal-bankroll"></canvas></div>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 col-md-6">
-        <div class="card shadow-sm">
-          <div class="card-body p-3">
-            <h5 class="card-title small mb-3">Lucro acumulado por dia</h5>
-            <div class="chart-wrap" style="height:220px"><canvas id="anal-lucro-acum"></canvas></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <h5 class="card-title small mb-0">Total de apostas por esporte</h5>
+              <div class="text-muted small">Total: ${stats.total}</div>
+            </div>
+            <div class="chart-wrap" style="height:220px"><canvas id="anal-total-esporte"></canvas></div>
           </div>
         </div>
       </div>
@@ -190,15 +180,11 @@ async function carregarAnalises(dias) {
       </div>
     </div>
 
-    <!-- Liga e casa de aposta -->
-    <div class="grid-2 mb-16">
+    <!-- Liga (removida a seção de casa de aposta, já que só usa Bet365) -->
+    <div class="mb-16">
       <div class="card">
         <div class="card-title">Top ligas por ROI</div>
         <div class="chart-wrap" style="height:220px"><canvas id="anal-liga-roi"></canvas></div>
-      </div>
-      <div class="card">
-        <div class="card-title">ROI por casa de aposta</div>
-        <div class="chart-wrap" style="height:220px"><canvas id="anal-casa-roi"></canvas></div>
       </div>
     </div>
 
@@ -208,33 +194,26 @@ async function carregarAnalises(dias) {
       ${renderTabelaSegmento(statsTag, 'tag')}
     </div>
 
-    <!-- Heatmap -->
-    <div class="card mb-16">
-      <div class="card-title mb-16">Win rate por dia da semana</div>
-      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:10px">
-        ${heatmap.map(h => {
-          const cor = h.total === 0 ? 'var(--bg4)' :
-            h.winRate >= 60 ? 'rgba(0,230,118,.15)' :
-            h.winRate >= 40 ? 'rgba(255,171,64,.12)' : 'rgba(255,77,109,.12)';
-          const txtCor = h.total === 0 ? 'var(--muted)' :
-            h.winRate >= 60 ? 'var(--green)' : h.winRate >= 40 ? 'var(--amber)' : 'var(--red)';
-          return `<div style="background:${cor};border:1px solid var(--border);border-radius:8px;padding:14px 8px;text-align:center">
-            <div style="font-size:.65rem;color:var(--text2);text-transform:uppercase;margin-bottom:4px">${h.dia}</div>
-            <div style="font-size:1.1rem;font-weight:700;color:${txtCor}">${h.total>0?fmtPct(h.winRate):'—'}</div>
-            <div style="font-size:.65rem;color:var(--muted);margin-top:2px">${h.total} ap. · ${fmtMoeda(h.lucro)}</div>
-          </div>`;
-        }).join('')}
+    <!-- Resumo por esporte (tabela) -->
+    <div class="grid-2 mb-16">
+      <div class="card">
+        <div class="card-title">Resumo por esporte</div>
+        ${renderTabelaSegmento(statsEsporte.filter(s => s.totalApostas > 0), 'esporte')}
+      </div>
+      <div class="card">
+        <div class="card-title">Top times por ROI</div>
+        <div id="anal-top-times-placeholder">${'<div class="text-muted" style="padding:16px;text-align:center">Sem dados</div>'}</div>
       </div>
     </div>
 
     <!-- Tabela ligaa completa -->
     <div class="card mb-16">
       <div class="card-title">Ranking de ligas (por ROI)</div>
-      ${renderTabelaSegmento(statsLiga.filter(l => l.totalApostas >= 2), 'liga')}
+      ${renderTabelaSegmento(statsLigaFiltrada.filter(l => l.totalApostas >= 2), 'liga')}
     </div>
   `;
 
-  setTimeout(() => renderChartsAnalises(apostas, stats, statsEsporte, statsTipo, statsLiga, statsCasa, lucroDias, evolucao), 50);
+  setTimeout(() => renderChartsAnalises(apostas, stats, statsEsporte, statsTipo, statsLigaFiltrada, statsCasa, lucroDias, evolucao), 50);
 }
 
 function renderTabelaSegmento(lista, campo) {
@@ -254,18 +233,7 @@ function renderTabelaSegmento(lista, campo) {
 }
 
 function renderChartsAnalises(apostas, stats, statsEsporte, statsTipo, statsLiga, statsCasa, lucroDias, evolucao) {
-  // Bankroll
-  destroyChart('anal-bankroll');
-  const ctx1 = document.getElementById('anal-bankroll');
-  if (ctx1) {
-    const saldos = evolucao.map(p => p.saldo);
-    const cor = saldos[saldos.length-1] >= saldos[0] ? '#00e676' : '#ff4d6d';
-    window._charts['anal-bankroll'] = new Chart(ctx1, {
-      type: 'line',
-      data: { labels: evolucao.map(p => p.data), datasets: [{ data: saldos, borderColor: cor, borderWidth: 2, fill: true, backgroundColor: cor + '12', pointRadius: 0, tension: 0.3 }] },
-      options: chartDefaults({ y: { ticks: { callback: v => 'R$'+v.toFixed(0) } } })
-    });
-  }
+  // Note: 'Evolução da banca' removed from analyses (dashboard keeps the main bankroll chart)
 
   // Lucro acumulado
   destroyChart('anal-lucro-acum');
@@ -278,6 +246,24 @@ function renderChartsAnalises(apostas, stats, statsEsporte, statsTipo, statsLiga
       type: 'line',
       data: { labels: lucroDias.map(d => d.data.slice(5)), datasets: [{ data: acumData, borderColor: corAcum, borderWidth: 2, fill: true, backgroundColor: corAcum + '15', pointRadius: 0, tension: 0.3 }] },
       options: chartDefaults({ y: { ticks: { callback: v => 'R$'+v.toFixed(0) } } })
+    });
+  }
+
+  // Total de apostas por esporte (novo)
+  destroyChart('anal-total-esporte');
+  const ctxTotal = document.getElementById('anal-total-esporte');
+  if (ctxTotal && statsEsporte.length) {
+    const filtered = statsEsporte.filter(s => s.totalApostas > 0).slice(0, 12);
+    window._charts['anal-total-esporte'] = new Chart(ctxTotal, {
+      type: 'bar',
+      data: {
+        labels: filtered.map(s => ESPORTES[s.nome]?.nome || s.nome),
+        datasets: [{ data: filtered.map(s => s.totalApostas),
+          backgroundColor: filtered.map(() => '#60a5fa40'),
+          borderColor: filtered.map(() => '#60a5fa'),
+          borderWidth: 1, borderRadius: 4 }]
+      },
+      options: { ...chartDefaults({ x: { grid: { display: false } } }), indexAxis: 'y' }
     });
   }
 
@@ -338,21 +324,35 @@ function renderChartsAnalises(apostas, stats, statsEsporte, statsTipo, statsLiga
     });
   }
 
-  // ROI por casa
-  destroyChart('anal-casa-roi');
-  const ctx6 = document.getElementById('anal-casa-roi');
-  if (ctx6 && statsCasa.length) {
-    const filtered = statsCasa.filter(s => s.totalApostas > 0);
-    window._charts['anal-casa-roi'] = new Chart(ctx6, {
-      type: 'bar',
-      data: {
-        labels: filtered.map(s => s.nome),
-        datasets: [{ data: filtered.map(s => parseFloat(s.roi.toFixed(2))),
-          backgroundColor: filtered.map(s => s.roi >= 0 ? '#448aff40' : '#ff4d6d40'),
-          borderColor: filtered.map(s => s.roi >= 0 ? '#448aff' : '#ff4d6d'),
-          borderWidth: 1, borderRadius: 4 }]
-      },
-      options: { ...chartDefaults({ y: { ticks: { callback: v => v.toFixed(1)+'%' } } }), indexAxis: 'y' }
+  // Nota: gráfico de ROI por casa de aposta removido (uso apenas Bet365)
+
+  // Top times por ROI (agregação simples baseada em campo `equipe` das apostas)
+  try {
+    const teamMap = {};
+    (apostas||[]).forEach(a => {
+      const t = a.equipe;
+      if (!t) return;
+      const lucro = calcLucro(a);
+      if (!teamMap[t]) teamMap[t] = { nome: t, totalApostas: 0, wins: 0, losses: 0, lucroTotal: 0, totalStake: 0 };
+      const obj = teamMap[t];
+      obj.totalApostas += 1;
+      obj.lucroTotal += Number(lucro||0);
+      obj.totalStake += Number(a.stake||0);
+      if (a.resultado === 'win') obj.wins += 1;
+      else if (a.resultado === 'loss') obj.losses += 1;
     });
+    const teamStats = Object.values(teamMap).map(x => ({
+      nome: x.nome,
+      totalApostas: x.totalApostas,
+      winRate: x.totalApostas ? (x.wins / x.totalApostas * 100) : 0,
+      roi: x.totalStake ? (x.lucroTotal / x.totalStake * 100) : 0,
+      lucroTotal: x.lucroTotal
+    }));
+    teamStats.sort((a,b) => b.roi - a.roi);
+    const topTimes = teamStats.slice(0, 10);
+    const placeholder = document.getElementById('anal-top-times-placeholder');
+    if (placeholder) placeholder.innerHTML = topTimes.length ? renderTabelaSegmento(topTimes, 'time') : '<div class="text-muted" style="padding:16px;text-align:center">Sem dados</div>';
+  } catch (e) {
+    console.warn('Erro ao gerar Top times', e);
   }
 }

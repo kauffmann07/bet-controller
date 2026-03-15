@@ -31,17 +31,17 @@ async function renderBanca() {
     <div class="grid-3 mb-16">
       <div class="card card-sm">
         <div class="card-title">Saldo atual</div>
-        <div class="card-value ${saldo >= bancaInicial ? 'pos' : 'neg'}">${fmtMoedaSimples(saldo)}</div>
+        <div class="card-value ${saldo >= bancaInicial ? 'pos' : 'neg'}" title="Saldo atual: ${fmtMoedaSimples(saldo)} · ${ESPORTES?.f1?.emoji || ''} ${ESPORTES?.f1?.nome || ''}">${fmtMoedaSimples(saldo)}</div>
         <div class="card-sub">Inicial: ${fmtMoedaSimples(bancaInicial)}</div>
       </div>
       <div class="card card-sm">
         <div class="card-title">Lucro hoje</div>
-        <div class="card-value ${statsHoje.lucroTotal >= 0 ? 'pos' : 'neg'}" style="font-size:1.3rem">${fmtMoeda(statsHoje.lucroTotal)}</div>
+        <div class="card-value ${statsHoje.lucroTotal >= 0 ? 'pos' : 'neg'}">${fmtMoeda(statsHoje.lucroTotal)}</div>
         <div class="card-sub">Atualizado</div>
       </div>
       <div class="card card-sm">
         <div class="card-title">Lucro mensal</div>
-        <div class="card-value ${statsMes.lucroTotal >= 0 ? 'pos' : 'neg'}" style="font-size:1.3rem">${fmtMoeda(statsMes.lucroTotal)}</div>
+        <div class="card-value ${statsMes.lucroTotal >= 0 ? 'pos' : 'neg'}">${fmtMoeda(statsMes.lucroTotal)}</div>
         <div class="card-sub">Mês atual</div>
       </div>
     </div>
