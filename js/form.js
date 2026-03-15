@@ -5,6 +5,22 @@ let formData = {};
 let editandoId = null;
 let selecoes = [];
 
+function pad2(n){ return String(n).padStart(2,'0'); }
+function isoToLocalDatetime(iso){
+  if(!iso) iso = new Date().toISOString();
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+function datetimeLocalToISO(val){
+  if(!val) return new Date().toISOString();
+  // val expected like 'YYYY-MM-DDTHH:mm'
+  const [date, time] = val.split('T');
+  const [y, m, d] = (date||'').split('-').map(Number);
+  const [hh, mm] = (time||'00:00').split(':').map(Number);
+  const dt = new Date(y, (m||1)-1, d||1, hh||0, mm||0, 0, 0);
+  return dt.toISOString();
+}
+
 // ─── GRUPOS DE MERCADO POR ESPORTE ────────────────────────────────────────────
 const GRUPOS_MERCADO = {
   futebol: [
@@ -207,7 +223,7 @@ function initForm(apostaParaEditar = null) {
         <div class="form-row cols-2">
           <div class="form-group">
             <label>Data e hora</label>
-            <input type="datetime-local" id="f-data" value="${formData.data || new Date().toISOString().slice(0,16)}">
+            <input type="datetime-local" id="f-data" value="${formData.data ? isoToLocalDatetime(formData.data) : isoToLocalDatetime(new Date().toISOString())}">
           </div>
         </div>
         <div id="step1-extra"></div>
@@ -227,7 +243,7 @@ function initForm(apostaParaEditar = null) {
           <div class="form-group">
             <label>Resultado</label>
             <select id="f-resultado" onchange="onResultadoChange()">
-              <option value="pendente" ${(!formData.resultado||formData.resultado==="pendente")?"selected":""}>Pendente</option>
+              <option value="pendente" ${(!formData.resultado||formData.resultado==="pendente")?"selected":""}>Aberta</option>
               <option value="win"      ${formData.resultado==="win"?"selected":""}>WIN</option>
               <option value="loss"     ${formData.resultado==="loss"?"selected":""}>LOSS</option>
               <option value="void"     ${formData.resultado==="void"?"selected":""}>VOID (cancelada)</option>
@@ -354,7 +370,10 @@ function renderCamposMercado() {
       <div class="form-group">
         <div class="flex items-center justify-between mb-16">
           <label style="margin-bottom:0">Seleções da acumulada</label>
-          <button class="btn btn-secondary btn-sm" onclick="adicionarSelecao()">+ Adicionar seleção</button>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary btn-sm" onclick="adicionarSelecao()">+ Adicionar seleção</button>
+            <button class="btn btn-secondary btn-sm" onclick="duplicarUltimaSelecao()">+ Mesma partida</button>
+          </div>
         </div>
         <div id="lista-selecoes"></div>
         <div class="odd-total-preview">
@@ -362,9 +381,9 @@ function renderCamposMercado() {
           <span class="val" id="odd-total-display">—</span>
         </div>
       </div>
-      <div class="form-group" style="max-width:220px">
+        <div class="form-group" style="max-width:220px">
         <label>Stake (R$)</label>
-        <input type="number" id="f-stake" step="0.01" min="0" value="${formData.stake||""}" oninput="atualizarOddTotal()">
+        <input type="number" id="f-stake" step="0.5" min="0" value="${formData.stake||""}" oninput="atualizarOddTotal()">
       </div>
     `;
     renderSelecoes(); return;
@@ -389,14 +408,14 @@ function renderCamposMercado() {
       <div class="mercado-grupos">${chipsHtml}</div>
     </div>
     <div id="campos-contexto-tipo"></div>
-    <div class="form-row cols-2" id="odd-stake-row" style="${tipoSel?"":"display:none"}">
+      <div class="form-row cols-2" id="odd-stake-row" style="${tipoSel?"":"display:none"}">
       <div class="form-group">
         <label>Odd</label>
-        <input type="number" id="f-odd" step="0.01" min="1.01" value="${formData.odd||""}" oninput="atualizarPreviewLucro()">
+        <input type="number" id="f-odd" step="0.5" min="1.01" value="${formData.odd||""}" oninput="atualizarPreviewLucro()">
       </div>
       <div class="form-group">
         <label>Stake (R$)</label>
-        <input type="number" id="f-stake" step="0.01" min="0" value="${formData.stake||""}" oninput="atualizarPreviewLucro()">
+        <input type="number" id="f-stake" step="0.5" min="0" value="${formData.stake||""}" oninput="atualizarPreviewLucro()">
       </div>
     </div>
   `;
@@ -623,6 +642,16 @@ function adicionarSelecao() {
   renderSelecoes();
 }
 
+function duplicarUltimaSelecao() {
+  if (selecoes.length === 0) { adicionarSelecao(); return; }
+  const last = selecoes[selecoes.length - 1];
+  const novo = { ...last, ordem: selecoes.length + 1 };
+  // limpar resultado da cópia
+  novo.resultado = 'pendente';
+  selecoes.push(novo);
+  renderSelecoes();
+}
+
 function removerSelecao(idx) {
   selecoes.splice(idx,1);
   selecoes.forEach((s,i)=>s.ordem=i+1);
@@ -674,14 +703,14 @@ function renderSelecoes() {
       </div>
       <div id="sel-ctx-${i}">${s.tipo_aposta ? renderCamposContextoTipoSel(i, s) : ""}</div>
       <div class="form-row cols-2" style="margin-top:8px">
-        <div class="form-group">
-          <label>Odd</label>
-          <input type="number" step="0.01" min="1.01" value="${s.odd||""}" oninput="onSelOdd(${i},this.value)" placeholder="Ex: 1.85">
-        </div>
+          <div class="form-group">
+            <label>Odd</label>
+            <input type="number" step="0.5" min="1.01" value="${s.odd||""}" oninput="onSelOdd(${i},this.value)" placeholder="Ex: 1.85">
+          </div>
         <div class="form-group">
           <label>Resultado desta seleção</label>
           <select onchange="selecoes[${i}].resultado=this.value">
-            <option value="pendente" ${s.resultado==="pendente"?"selected":""}>Pendente</option>
+            <option value="pendente" ${s.resultado==="pendente"?"selected":""}>Aberta</option>
             <option value="win"  ${s.resultado==="win"?"selected":""}>WIN</option>
             <option value="loss" ${s.resultado==="loss"?"selected":""}>LOSS</option>
             <option value="void" ${s.resultado==="void"?"selected":""}>VOID</option>
@@ -845,7 +874,7 @@ async function salvarApostaForm() {
     const tipo = formData.tipo_registro||"simples";
     const base = {
       tipo_registro: tipo,
-      data:          document.getElementById("f-data")?.value||new Date().toISOString().slice(0,16),
+      data:          datetimeLocalToISO(document.getElementById("f-data")?.value||""),
       casa_aposta:   CASA_APOSTA_UNICA,
       resultado:     document.getElementById("f-resultado")?.value||"pendente",
       lucro_cashout: parseFloat(document.getElementById("f-cashout-val")?.value)||0,

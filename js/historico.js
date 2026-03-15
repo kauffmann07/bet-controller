@@ -17,62 +17,76 @@ async function renderHistorico() {
         <button class="btn btn-secondary btn-sm" onclick="exportarCSVClick()">↓ CSV</button>
         <button class="btn btn-secondary btn-sm" onclick="exportarJSONClick()">↓ JSON</button>
         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('import-file').click()">↑ Importar</button>
-        <button class="btn btn-primary btn-sm" onclick="aplicarFiltros()">Filtrar</button>
-        <button class="btn btn-secondary btn-sm" onclick="limparFiltros()">Limpar</button>
         <input type="file" id="import-file" accept=".json" style="display:none" onchange="importarJSONClick(this)">
       </div>
     </div>
 
     <div class="filtros-bar">
-      <div><label>De</label><input type="date" id="filt-inicio" value="${histFiltros.dataInicio||''}"></div>
-      <div><label>Até</label><input type="date" id="filt-fim" value="${histFiltros.dataFim||''}"></div>
+        <div>
+          <label>Intervalo</label>
+          <select id="filt-intervalo" onchange="onIntervaloChange()">
+            <option value="">Personalizado</option>
+            <option value="hoje">Hoje</option>
+            <option value="semana">Últimos 7 dias</option>
+            <option value="mes">Últimos 30 dias</option>
+          </select>
+        </div>
+      <div><label>De</label><input type="date" id="filt-inicio" value="${histFiltros.dataInicio||''}" onchange="document.getElementById('filt-intervalo').value='';aplicarFiltros()"></div>
+      <div><label>Até</label><input type="date" id="filt-fim" value="${histFiltros.dataFim||''}" onchange="document.getElementById('filt-intervalo').value='';aplicarFiltros()"></div>
       <div>
         <label>Esporte</label>
-        <select id="filt-esporte" onchange="onFiltEsporte()">
+          <select id="filt-esporte" onchange="onFiltEsporte();aplicarFiltros()">
           <option value="">Todos</option>
           ${Object.entries(ESPORTES).map(([k,v])=>`<option value="${k}" ${histFiltros.esporte===k?'selected':''}>${v.nome}</option>`).join('')}
         </select>
       </div>
       <div>
         <label>Liga</label>
-        <select id="filt-liga">
+          <select id="filt-liga" onchange="aplicarFiltros()">
           <option value="">Todas</option>
           ${histFiltros.esporte && ESPORTES[histFiltros.esporte] ? ESPORTES[histFiltros.esporte].ligas.map(l=>`<option value="${l}" ${histFiltros.liga===l?'selected':''}>${l}</option>`).join('') : ''}
         </select>
       </div>
       <div>
         <label>Resultado</label>
-        <select id="filt-resultado">
+          <select id="filt-resultado" onchange="aplicarFiltros()">
           <option value="">Todos</option>
           <option value="win" ${histFiltros.resultado==='win'?'selected':''}>WIN</option>
           <option value="loss" ${histFiltros.resultado==='loss'?'selected':''}>LOSS</option>
           <option value="void" ${histFiltros.resultado==='void'?'selected':''}>VOID</option>
           <option value="cashout" ${histFiltros.resultado==='cashout'?'selected':''}>Cashout</option>
-          <option value="pendente" ${histFiltros.resultado==='pendente'?'selected':''}>Pendente</option>
+          <option value="pendente" ${histFiltros.resultado==='pendente'?'selected':''}>Aberta</option>
         </select>
       </div>
       <div>
         <label>Tag</label>
-        <select id="filt-tag">
+          <select id="filt-tag" onchange="aplicarFiltros()">
           <option value="">Todas</option>
           ${TAGS.map(t=>`<option value="${t.value}" ${histFiltros.tag===t.value?'selected':''}>${t.label}</option>`).join('')}
         </select>
       </div>
       <div>
         <label>Time</label>
-        <input type="text" id="filt-time" placeholder="Nome do time" value="${histFiltros.time||''}">
+          <input type="text" id="filt-time" placeholder="Nome do time" value="${histFiltros.time||''}" oninput="aplicarFiltros()">
       </div>
       <div>
         <label>Jogador</label>
-        <input type="text" id="filt-jogador" placeholder="Nome do jogador" value="${histFiltros.jogador||''}">
+          <input type="text" id="filt-jogador" placeholder="Nome do jogador" value="${histFiltros.jogador||''}" oninput="aplicarFiltros()">
       </div>
       <div>
         <label>Tipo</label>
-        <select id="filt-tipo-reg">
+          <select id="filt-tipo-reg" onchange="aplicarFiltros()">
           <option value="">Todos</option>
           <option value="simples" ${histFiltros.tipo_registro==='simples'?'selected':''}>Simples</option>
           <option value="acumulada" ${histFiltros.tipo_registro==='acumulada'?'selected':''}>Acumulada</option>
         </select>
+      </div>
+      <div class="filtros-actions">
+        <button class="btn btn-primary btn-sm" onclick="aplicarFiltros()">Filtrar</button>
+        <button class="btn btn-secondary btn-sm" onclick="limparFiltros()">Limpar</button>
+        <button class="btn btn-secondary btn-sm" onclick="exportarCSVClick()">↓ CSV</button>
+        <button class="btn btn-secondary btn-sm" onclick="exportarJSONClick()">↓ JSON</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('import-file').click()">↑ Importar</button>
       </div>
     </div>
 
@@ -80,18 +94,18 @@ async function renderHistorico() {
       <div class="table-wrap">
         <table>
           <thead>
-            <tr>
-              <th onclick="ordenarHist('data')">Data ${histOrdem.campo==='data'?(histOrdem.asc?'↑':'↓'):''}</th>
-              <th>Tipo</th>
-              <th onclick="ordenarHist('esporte')">Esporte / Jogo ${histOrdem.campo==='esporte'?(histOrdem.asc?'↑':'↓'):''}</th>
-              <th>Liga(s) / Aposta</th>
-              <th onclick="ordenarHist('odd_total')">Odd ${histOrdem.campo==='odd_total'?(histOrdem.asc?'↑':'↓'):''}</th>
-              <th onclick="ordenarHist('stake')">Stake ${histOrdem.campo==='stake'?(histOrdem.asc?'↑':'↓'):''}</th>
-              <th>Resultado</th>
-              <th onclick="ordenarHist('lucro')">Lucro ${histOrdem.campo==='lucro'?(histOrdem.asc?'↑':'↓'):''}</th>
-              <th>Tag</th>
-              <th>Ações</th>
-            </tr>
+              <tr>
+                <th onclick="ordenarHist('data')">Data ${histOrdem.campo==='data'?(histOrdem.asc?'↑':'↓'):''}</th>
+                <th onclick="ordenarHist('_tipo')">Tipo ${histOrdem.campo==='_tipo'?(histOrdem.asc?'↑':'↓'):''}</th>
+                <th onclick="ordenarHist('esporte')">Esporte / Jogo ${histOrdem.campo==='esporte'?(histOrdem.asc?'↑':'↓'):''}</th>
+                <th onclick="ordenarHist('_liga')">Liga(s) / Aposta ${histOrdem.campo==='_liga'?(histOrdem.asc?'↑':'↓'):''}</th>
+                <th onclick="ordenarHist('odd_total')">Odd ${histOrdem.campo==='odd_total'?(histOrdem.asc?'↑':'↓'):''}</th>
+                <th onclick="ordenarHist('stake')">Stake ${histOrdem.campo==='stake'?(histOrdem.asc?'↑':'↓'):''}</th>
+                <th onclick="ordenarHist('_resultado')">Resultado ${histOrdem.campo==='_resultado'?(histOrdem.asc?'↑':'↓'):''}</th>
+                <th onclick="ordenarHist('lucro')">Lucro ${histOrdem.campo==='lucro'?(histOrdem.asc?'↑':'↓'):''}</th>
+                <th onclick="ordenarHist('_tag')">Tag ${histOrdem.campo==='_tag'?(histOrdem.asc?'↑':'↓'):''}</th>
+                <th>Ações</th>
+              </tr>
           </thead>
           <tbody id="hist-tbody">
             <tr><td colspan="10" style="text-align:center;padding:32px;color:var(--muted)">Carregando...</td></tr>
@@ -125,6 +139,32 @@ function onFiltEsporte() {
         ? ESPORTES[esporte].ligas.map(l=>`<option value="${l}">${l}</option>`).join('')
         : '');
   }
+  // aplicar filtro automaticamente quando o esporte mudar
+  try { aplicarFiltros(); } catch(e){}
+}
+
+function onIntervaloChange() {
+  const v = document.getElementById('filt-intervalo')?.value;
+  const inicio = document.getElementById('filt-inicio');
+  const fim = document.getElementById('filt-fim');
+  const today = new Date();
+  const pad = (n)=>String(n).padStart(2,'0');
+  if (!inicio || !fim) { aplicarFiltros(); return; }
+  if (v === 'hoje') {
+    const iso = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+    inicio.value = iso; fim.value = iso;
+  } else if (v === 'semana') {
+    const past = new Date(); past.setDate(today.getDate()-6);
+    const iso1 = `${past.getFullYear()}-${pad(past.getMonth()+1)}-${pad(past.getDate())}`;
+    const iso2 = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+    inicio.value = iso1; fim.value = iso2;
+  } else if (v === 'mes') {
+    const past = new Date(); past.setDate(today.getDate()-29);
+    const iso1 = `${past.getFullYear()}-${pad(past.getMonth()+1)}-${pad(past.getDate())}`;
+    const iso2 = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+    inicio.value = iso1; fim.value = iso2;
+  }
+  aplicarFiltros();
 }
 
 function aplicarFiltros() {
@@ -211,6 +251,17 @@ async function carregarTabelaHistorico() {
   }
 
   apostas = apostas.map(a => ({ ...a, lucro: calcLucro(a) }));
+  // Campos computados para ordenação e exibição consistente
+  apostas = apostas.map(a => {
+    const isAcum = a.tipo_registro === 'acumulada';
+    const _liga = isAcum ? ligasAcumulada(a) : (a.liga || '');
+    const _tipo = a.tipo_registro || '';
+    const _resultado = a.resultado || 'pendente';
+    const _tag = a.tag || '';
+    return { ...a, _liga, _tipo, _resultado, _tag };
+  });
+  // Garantir que apostas pendentes aparecem com stake e não percam dados
+  apostas = apostas.map(a => ({ ...a, resultado: a.resultado || 'pendente' }));
   apostas.sort((a, b) => {
     let va = a[histOrdem.campo], vb = b[histOrdem.campo];
     if (typeof va === 'string') { va = va.toLowerCase(); vb = (vb||'').toLowerCase(); }
@@ -307,7 +358,8 @@ async function editarAposta(id) {
 }
 
 async function excluirApostaClick(id) {
-  if (!confirm('Excluir esta aposta? Esta ação não pode ser desfeita.')) return;
+  const ok = await showConfirm('Excluir esta aposta? Esta ação não pode ser desfeita.', 'Excluir aposta');
+  if (!ok) return;
   await excluirAposta(id);
   toast('Aposta excluída');
   carregarTabelaHistorico();
@@ -358,9 +410,9 @@ async function verSelecoes(id) {
 async function encerrarApostaClick(id) {
   const aposta = await buscarApostaComSelecoes(id);
   if (!aposta) return;
-  const recebidoStr = prompt('Valor recebido ao encerrar a aposta (R$):', aposta.lucro_cashout || '');
+  const recebidoStr = await showPrompt('Valor recebido ao encerrar a aposta (R$):', aposta.lucro_cashout || '', 'Encerrar aposta');
   if (recebidoStr === null) return; // cancelado
-  const recebido = parseFloat(recebidoStr.replace(',', '.'));
+  const recebido = parseFloat(String(recebidoStr).replace(',', '.'));
   if (isNaN(recebido)) { toast('Valor inválido', 'error'); return; }
   try {
     await atualizarAposta(id, { ...aposta, resultado: 'cashout', lucro_cashout: recebido });
@@ -385,7 +437,8 @@ async function exportarJSONClick() {
 async function importarJSONClick(input) {
   const file = input.files[0]; if (!file) return;
   const text = await file.text();
-  if (!confirm('Isso irá SUBSTITUIR todos os dados existentes. Continuar?')) return;
+  const ok = await showConfirm('Isso irá SUBSTITUIR todos os dados existentes. Continuar?', 'Importar backup');
+  if (!ok) return;
   try {
     await importarJSON(text);
     toast('Dados importados com sucesso!');

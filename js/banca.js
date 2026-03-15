@@ -21,6 +21,9 @@ async function renderBanca() {
     <div class="section-header">
       <div><div class="section-title">Banca</div>
       <div class="section-sub">Gestão de bankroll e limites</div></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-danger btn-sm" onclick="zerarConta()">Zerar conta</button>
+      </div>
     </div>
 
     ${alertas.map(a => `<div class="alerta alerta-${a.tipo}">${a.msg}</div>`).join('')}
@@ -116,6 +119,26 @@ async function salvarMovimento() {
   fecharModal('modal-movimento');
   toast('Movimento registrado!');
   renderBanca();
+}
+
+async function zerarConta() {
+  const ok = await showConfirm('Isto irá apagar todas as apostas, seleções e movimentações de banca. Deseja continuar?', 'Zerar conta');
+  if (!ok) return;
+  try {
+    await db.transaction('rw', db.apostas, db.selecoes, db.bankroll, async () => {
+      await db.selecoes.clear();
+      await db.apostas.clear();
+      await db.bankroll.clear();
+    });
+    // opcional: zerar o bankroll inicial
+    await setConfig('bankroll_inicial', 0);
+    await recalcularBankroll();
+    toast('Conta zerada com sucesso', 'success');
+    renderBanca();
+  } catch (e) {
+    console.error(e);
+    toast('Erro ao zerar conta', 'error');
+  }
 }
 
 // ─── CONFIG ─────────────────────────────────────────────────────────────────

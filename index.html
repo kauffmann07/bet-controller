@@ -22,12 +22,12 @@
   <nav id="nav">
     <div class="logo">BET<span>TRACKER</span></div>
     <div class="nav-links">
-      <button data-rota="dashboard">Dashboard</button>
-      <button data-rota="nova-aposta">+ Nova Aposta</button>
-      <button data-rota="historico">Histórico</button>
       <button data-rota="analises">Análises</button>
+      <button data-rota="abertas">Apostas Abertas</button>
       <button data-rota="banca">Banca</button>
-      <button data-rota="config">Config</button>
+      <button data-rota="dashboard">Dashboard</button>
+      <button data-rota="historico">Histórico</button>
+      <button data-rota="nova-aposta">+ Nova Aposta</button>
     </div>
     <div class="saldo-nav">
       <span style="color:var(--muted);font-size:.68rem;font-weight:600;letter-spacing:.06em">SALDO</span>
@@ -41,11 +41,24 @@
     <section id="sec-historico"   class="section"><div style="text-align:center;padding:60px;color:var(--muted)">Carregando...</div></section>
     <section id="sec-analises"    class="section"><div style="text-align:center;padding:60px;color:var(--muted)">Carregando...</div></section>
     <section id="sec-banca"       class="section"><div style="text-align:center;padding:60px;color:var(--muted)">Carregando...</div></section>
-    <section id="sec-config"      class="section"><div style="text-align:center;padding:60px;color:var(--muted)">Carregando...</div></section>
+    <section id="sec-abertas"    class="section"><div style="text-align:center;padding:40px;color:var(--muted)">Carregando apostas abertas...</div></section>
+    <!-- config page removed -->
   </main>
 </div>
 
 <div id="toast-container"></div>
+
+<!-- Modal custom único para confirmações e prompts (padronizado) -->
+<div id="custom-modal" class="modal-overlay">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <span class="modal-title" id="custom-modal-title">Confirmação</span>
+      <button class="btn-ghost btn" onclick="closeCustomModal()">✕</button>
+    </div>
+    <div id="custom-modal-body" style="font-size:.95rem;color:var(--text2)"></div>
+    <div id="custom-modal-actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"></div>
+  </div>
+</div>
 
 <script src="data/esportes.js"></script>
 <script src="js/db.js"></script>
@@ -53,6 +66,7 @@
 <script src="js/dashboard.js"></script>
 <script src="js/form.js"></script>
 <script src="js/historico.js"></script>
+<script src="js/abertas.js"></script>
 <script src="js/analises.js"></script>
 <script src="js/banca.js"></script>
 

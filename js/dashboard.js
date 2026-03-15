@@ -7,13 +7,17 @@ async function renderDashboard() {
   const inicioSemana = new Date(); inicioSemana.setDate(inicioSemana.getDate() - inicioSemana.getDay());
   const inicioMes = new Date(); inicioMes.setDate(1);
 
-  const [statsHoje, statsSemana, statsMes] = await Promise.all([
+  // períodos: hoje, últimos 7 dias, últimos 30 dias
+  const inicio7 = new Date(); inicio7.setDate(inicio7.getDate() - 6);
+  const inicio30 = new Date(); inicio30.setDate(inicio30.getDate() - 29);
+  const [statsHoje, stats7d, stats30d] = await Promise.all([
     getEstatisticasGerais({ dataInicio: hoje }),
-    getEstatisticasGerais({ dataInicio: inicioSemana.toISOString().split('T')[0] }),
-    getEstatisticasGerais({ dataInicio: inicioMes.toISOString().split('T')[0] })
+    getEstatisticasGerais({ dataInicio: inicio7.toISOString().split('T')[0] }),
+    getEstatisticasGerais({ dataInicio: inicio30.toISOString().split('T')[0] })
   ]);
 
   const apostas = await buscarApostas();
+  const pendentes = apostas.filter(a => !a.resultado || a.resultado === 'pendente');
   const ultimas5 = apostas.slice(0, 5);
   const heatmap = await getMapaCalor();
   const evolucao = await getEvolucaoBankroll();
@@ -29,16 +33,11 @@ async function renderDashboard() {
       <button class="btn btn-primary btn-sm" onclick="navegar('nova-aposta')">+ Nova Aposta</button>
     </div>
 
-    <!-- KPIs principais -->
+    <!-- KPIs principais (linha 1: 5 colunas) -->
     <div class="grid-5 mb-16">
       <div class="card card-sm">
         <div class="card-title">Saldo atual</div>
         <div class="card-value ${saldo >= 0 ? 'pos' : 'neg'}">${fmtMoedaSimples(saldo)}</div>
-      </div>
-      <div class="card card-sm">
-        <div class="card-title">ROI total</div>
-        <div class="card-value ${stats.roi >= 0 ? 'pos' : 'neg'}">${fmtPct(stats.roi)}</div>
-        <div class="card-sub">${fmtMoeda(stats.lucroTotal)}</div>
       </div>
       <div class="card card-sm">
         <div class="card-title">Win rate</div>
@@ -46,66 +45,40 @@ async function renderDashboard() {
         <div class="card-sub">${stats.wins}W / ${stats.losses}L de ${stats.apostasResolvidas}</div>
       </div>
       <div class="card card-sm">
-        <div class="card-title">Streak atual</div>
-        <div class="card-value ${stats.streakTipo === 'win' ? 'pos' : stats.streakTipo === 'loss' ? 'neg' : ''}">
-          ${stats.streak > 0 ? (stats.streakTipo === 'win' ? '+' : '-') + stats.streak : '—'}
-        </div>
-        <div class="card-sub">Máx: +${stats.maxWin} / -${stats.maxLoss}</div>
+        <div class="card-title">Apostas abertas</div>
+        <div class="card-value ${pendentes.length>0?'warn':''}">${pendentes.length} abertas</div>
+        <div class="card-sub">Em risco: ${fmtMoeda(pendentes.reduce((s,a)=>s+(a.stake||0),0))}</div>
       </div>
-      <div class="card card-sm">
-        <div class="card-title">Odd média</div>
-        <div class="card-value">${fmtOdd(stats.oddMedia)}</div>
-        <div class="card-sub">${stats.total} apostas total</div>
+      <div class="card card-sm col-span-2">
+        <div class="card-title">Lucro total</div>
+        <div class="card-value ${stats.lucroTotal >= 0 ? 'pos' : 'neg'}">${fmtMoeda(stats.lucroTotal)}</div>
+        <div class="card-sub">ROI: ${fmtPct(stats.roi)}</div>
       </div>
     </div>
 
-    <!-- Período -->
-    <div class="grid-3 mb-16">
-      <div class="card card-sm">
-        <div class="card-title">Hoje</div>
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="card-value ${statsHoje.lucroTotal >= 0 ? 'pos' : 'neg'} " style="font-size:1.2rem">${fmtMoeda(statsHoje.lucroTotal)}</div>
-            <div class="card-sub">${statsHoje.total} apostas · ${fmtPct(statsHoje.winRate)} WR</div>
-          </div>
-          <div class="text-right">
-            <div style="font-size:.75rem; color:var(--text2)">ROI</div>
-            <div class="${statsHoje.roi >= 0 ? 'text-green' : 'text-red'}" style="font-size:1rem; font-weight:700">${fmtPct(statsHoje.roi)}</div>
-          </div>
-        </div>
+    <!-- Período (linha 2: 5 colunas: 2 + 2 + 1) -->
+    <div class="grid-5 mb-16">
+      <div class="card card-sm col-span-2">
+        <div class="card-title">Lucro hoje</div>
+        <div class="card-value ${statsHoje.lucroTotal >= 0 ? 'pos' : 'neg'}" style="font-size:1.2rem">${fmtMoeda(statsHoje.lucroTotal)}</div>
+        <div class="card-sub">${statsHoje.total} apostas · ${fmtPct(statsHoje.winRate)} WR</div>
+      </div>
+      <div class="card card-sm col-span-2">
+        <div class="card-title">Lucro últimos 7 dias</div>
+        <div class="card-value ${stats7d.lucroTotal >= 0 ? 'pos' : 'neg'}" style="font-size:1.2rem">${fmtMoeda(stats7d.lucroTotal)}</div>
+        <div class="card-sub">${stats7d.total} apostas · ${fmtPct(stats7d.winRate)} WR</div>
       </div>
       <div class="card card-sm">
-        <div class="card-title">Esta semana</div>
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="card-value ${statsSemana.lucroTotal >= 0 ? 'pos' : 'neg'}" style="font-size:1.2rem">${fmtMoeda(statsSemana.lucroTotal)}</div>
-            <div class="card-sub">${statsSemana.total} apostas · ${fmtPct(statsSemana.winRate)} WR</div>
-          </div>
-          <div class="text-right">
-            <div style="font-size:.75rem; color:var(--text2)">ROI</div>
-            <div class="${statsSemana.roi >= 0 ? 'text-green' : 'text-red'}" style="font-size:1rem; font-weight:700">${fmtPct(statsSemana.roi)}</div>
-          </div>
-        </div>
-      </div>
-      <div class="card card-sm">
-        <div class="card-title">Este mês</div>
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="card-value ${statsMes.lucroTotal >= 0 ? 'pos' : 'neg'}" style="font-size:1.2rem">${fmtMoeda(statsMes.lucroTotal)}</div>
-            <div class="card-sub">${statsMes.total} apostas · ${fmtPct(statsMes.winRate)} WR</div>
-          </div>
-          <div class="text-right">
-            <div style="font-size:.75rem; color:var(--text2)">ROI</div>
-            <div class="${statsMes.roi >= 0 ? 'text-green' : 'text-red'}" style="font-size:1rem; font-weight:700">${fmtPct(statsMes.roi)}</div>
-          </div>
-        </div>
+        <div class="card-title">Lucro últimos 30 dias</div>
+        <div class="card-value ${stats30d.lucroTotal >= 0 ? 'pos' : 'neg'}" style="font-size:1.2rem">${fmtMoeda(stats30d.lucroTotal)}</div>
+        <div class="card-sub">${stats30d.total} apostas · ${fmtPct(stats30d.winRate)} WR</div>
       </div>
     </div>
 
     <!-- Gráficos -->
     <div class="grid-2 mb-16">
       <div class="card">
-        <div class="card-title">Evolução do bankroll</div>
+        <div class="card-title">Evolução da banca</div>
         <div class="chart-wrap" style="height:180px"><canvas id="chart-bankroll"></canvas></div>
       </div>
       <div class="card">
@@ -143,7 +116,7 @@ async function renderDashboard() {
           ultimas5.map(a => `
           <div class="ultima-aposta-mini">
             <div>
-              <span class="sport">${ESPORTES[a.esporte]?.emoji || ''} ${a.liga || a.esporte}</span>
+              <span class="sport">${ESPORTES[a.esporte]?.emoji || ''} ${(a.liga && a.liga.trim()) ? a.liga : (ESPORTES[a.esporte]?.nome || a.esporte || '')}</span>
               <span class="text-muted" style="margin-left:8px;font-size:.7rem">${fmtData(a.data)}</span>
             </div>
             <div style="display:flex;align-items:center;gap:8px">

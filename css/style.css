@@ -1,34 +1,34 @@
 /* ═══════════════════════════════════════════════════════════
-   BET TRACKER — Light Mode
-   Tema: Clean Dashboard — light, verde/vermelho para resultados
-   Fonte: JetBrains Mono + Syne
-   ═══════════════════════════════════════════════════════════ */
+  BET TRACKER — Dark Mode (padrão)
+  Tema: Dark dashboard — verde/vermelho para resultados
+  Fonte: JetBrains Mono + Syne
+  ═══════════════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Syne:wght@400;600;700;800&display=swap');
 
 :root {
-  --bg:       #f4f5f7;
-  --bg2:      #ffffff;
-  --bg3:      #f0f1f3;
-  --bg4:      #e8eaed;
-  --border:   #dde0e6;
-  --border2:  #c8cdd6;
-  --muted:    #9ba3b0;
-  --text2:    #5c6473;
-  --text:     #2d3340;
-  --bright:   #111827;
+  --bg: #0f1724;
+  --bg2: #0b1220;
+  --bg3: #0c1422;
+  --bg4: #0e1a2a;
+  --border: #18212e;
+  --border2: #223343;
+  --muted: #98a2b3;
+  --text2: #9fb0c7;
+  --text: #e6eef8;
+  --bright: #ffffff;
 
-  --green:    #059669;
-  --green2:   #047857;
-  --green-bg: rgba(5,150,105,.08);
-  --red:      #dc2626;
-  --red-bg:   rgba(220,38,38,.07);
-  --amber:    #d97706;
-  --amber-bg: rgba(217,119,6,.08);
-  --blue:     #2563eb;
-  --blue-bg:  rgba(37,99,235,.07);
-  --void:     #7c3aed;
-  --void-bg:  rgba(124,58,237,.07);
+  --green: #22c55e;
+  --green2: #16a34a;
+  --green-bg: rgba(34,197,94,.08);
+  --red: #fb7185;
+  --red-bg: rgba(251,113,133,.06);
+  --amber: #f59e0b;
+  --amber-bg: rgba(245,158,11,.06);
+  --blue: #60a5fa;
+  --blue-bg: rgba(96,165,250,.06);
+  --void: #7c3aed;
+  --void-bg: rgba(124,58,237,.06);
 
   --radius:   8px;
   --radius-lg:14px;
@@ -38,10 +38,15 @@
 
   --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
   --shadow:    0 4px 6px rgba(0,0,0,.06), 0 2px 4px rgba(0,0,0,.04);
+  --row-alt: rgba(255,255,255,0.02);
+  --btn-hover-bg: rgba(255,255,255,0.02);
+  --btn-hover-shadow: 0 8px 20px rgba(2,6,23,0.45);
 }
 
+/* light theme removed (dark is default) */
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 14px; }
+html { font-size: 16px; }
 body {
   background: var(--bg);
   color: var(--text);
@@ -170,20 +175,64 @@ label { display: block; font-size: .72rem; color: var(--text2); margin-bottom: 4
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 16px; border-radius: var(--radius);
   font-size: .78rem; font-weight: 500;
-  transition: opacity .15s, background .15s, box-shadow .15s;
+  transition: background .18s, box-shadow .18s, transform .12s, opacity .12s;
   font-family: var(--font-mono);
   letter-spacing: .03em;
 }
-.btn:hover { opacity: .88; }
+.btn:hover { opacity: 1; transform: translateY(-1px); }
+.btn:active { transform: translateY(0); opacity: .98; }
+.btn:focus { outline: 2px solid rgba(96,165,250,.12); outline-offset: 2px; }
+.btn-primary:hover { background: var(--green2); box-shadow: 0 8px 18px rgba(16,185,129,0.08); }
+.btn-secondary:hover { background: var(--bg3); box-shadow: 0 6px 14px rgba(2,6,23,0.04); }
+.btn-danger:hover { background: rgba(251,113,133,0.08); box-shadow: 0 6px 14px rgba(251,113,133,0.04); }
 .btn-primary { background: var(--green2); color: #fff; box-shadow: 0 1px 3px rgba(4,120,87,.3); }
 .btn-secondary { background: var(--bg2); color: var(--text); border: 1px solid var(--border2); }
 .btn-secondary:hover { background: var(--bg3); }
 .btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid rgba(220,38,38,.3); }
+.btn-warning { background: linear-gradient(180deg,#f2b95a,#f59e0b); color: #111; border: 1px solid rgba(245,158,11,0.18); }
 .btn-ghost { color: var(--text2); padding: 6px 10px; }
 .btn-ghost:hover { color: var(--text); background: var(--bg3); }
 .btn-sm { padding: 5px 10px; font-size: .72rem; }
 .btn-icon { padding: 7px; border-radius: var(--radius); }
 button:disabled { opacity: .4; cursor: not-allowed; }
+
+/* CTA buttons (match + Nova Aposta visual) */
+.btn-cta {
+  padding: 10px 18px; border-radius: 14px; font-family: var(--font-ui);
+  font-weight: 700; letter-spacing: .04em; font-size: .88rem; color: #fff;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  box-shadow: 0 8px 24px rgba(2,6,23,0.28); border: none; cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, opacity .12s;
+}
+.btn-cta:hover { transform: translateY(-2px); }
+.btn-cta:active { transform: translateY(0); }
+.btn-cta.win { background: linear-gradient(180deg,var(--green2),var(--green)); }
+.btn-cta.loss { background: linear-gradient(180deg,#d86b78,#fb7185); }
+.btn-cta.cashout { background: linear-gradient(180deg,#f2b95a,#f59e0b); color: #111; }
+
+/* Make CTA slightly smaller on very small screens */
+@media (max-width:420px) {
+  .btn-cta { padding: 8px 12px; font-size: .82rem; border-radius: 12px; }
+}
+
+/* ─── OPEN BETS ACTIONS (Loss / Cashout) ───────────────────── */
+/* Use CTA-like appearance but with reduced vertical size and simple hover */
+.open-bet-actions .btn {
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: .82rem; /* keep compact */
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px;
+}
+.open-bet-actions .btn:not(.btn-primary) { border: none; }
+.open-bet-actions .btn-primary { background: linear-gradient(180deg,var(--green2),var(--green)); color: #fff; box-shadow: 0 6px 18px rgba(16,185,129,0.08); }
+.open-bet-actions .btn-danger { background: linear-gradient(180deg,#e75067,#e75067); color: #fff; box-shadow: 0 6px 18px rgba(220,38,38,0.08); }
+.open-bet-actions .btn-warning { background: linear-gradient(180deg,#f2b95a,#f59e0b); color: #111; box-shadow: 0 6px 18px rgba(245,158,11,0.08); }
+
+/* Simple hover: slight lift + subtle brighten */
+.open-bet-actions .btn:hover { transform: translateY(-2px); opacity: 1; }
+.open-bet-actions .btn-danger:hover { filter: brightness(.96); box-shadow: 0 10px 22px rgba(220,38,38,0.08); }
+.open-bet-actions .btn-warning:hover { filter: brightness(.96); box-shadow: 0 10px 22px rgba(245,158,11,0.08); }
 
 /* ─── FORM ──────────────────────────────────────────────────── */
 .form-group { margin-bottom: 16px; }
@@ -208,6 +257,21 @@ button:disabled { opacity: .4; cursor: not-allowed; }
 .step-item.done { color: var(--green2); background: var(--green-bg); }
 .step-content { display: none; }
 .step-content.active { display: block; }
+
+/* More-specific overrides to ensure Loss / Cashout buttons render with solid CTA-like colors inside open-bets */
+.open-bets-grid .open-bet-card .open-bet-actions .btn-danger {
+  background: linear-gradient(180deg,#e75067,#e75067) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 8px 20px rgba(220,38,38,0.08) !important;
+}
+.open-bets-grid .open-bet-card .open-bet-actions .btn-warning {
+  background: linear-gradient(180deg,#f2b95a,#f59e0b) !important;
+  color: #111 !important;
+  border: none !important;
+  box-shadow: 0 8px 20px rgba(245,158,11,0.08) !important;
+}
+
 
 .star-rating { display: flex; gap: 4px; padding: 6px 0; }
 .star-rating span { font-size: 1.2rem; cursor: pointer; color: var(--border2); transition: color .1s; }
@@ -254,8 +318,9 @@ thead th {
   cursor: pointer; user-select: none;
 }
 thead th:hover { color: var(--text); }
-tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
-tbody tr:hover { background: var(--bg3); }
+tbody tr { border-bottom: 1px solid var(--border); transition: background .14s, transform .08s, box-shadow .12s; }
+tbody tr:nth-child(odd) { background: var(--row-alt); }
+tbody tr:hover { background: rgba(255,255,255,0.03); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.005); transform: translateY(-1px); }
 tbody td { padding: 10px 12px; }
 .td-lucro.pos { color: var(--green); font-weight: 600; }
 .td-lucro.neg { color: var(--red); font-weight: 600; }
@@ -269,9 +334,16 @@ tbody td { padding: 10px 12px; }
   padding: 16px; margin-bottom: 16px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 12px;
+  gap: 12px; align-items: end;
   box-shadow: var(--shadow-sm);
 }
+
+.filtros-bar .filtros-actions {
+  grid-column: 1 / -1;
+  display: flex; justify-content: flex-end; gap: 8px; align-items: center; margin-top: 6px;
+}
+.filtros-bar label { display:block; font-size: .68rem; color: var(--text2); margin-bottom:6px }
+.filtros-bar input[type="date"], .filtros-bar select, .filtros-bar input[type="text"] { padding:8px 10px; }
 
 /* ─── CHARTS ────────────────────────────────────────────────── */
 .chart-wrap { position: relative; }
@@ -376,5 +448,62 @@ tbody td { padding: 10px 12px; }
   #main { padding: 12px; }
   .grid-2, .grid-3, .grid-4, .grid-5 { grid-template-columns: 1fr; }
   .form-row.cols-2, .form-row.cols-3 { grid-template-columns: 1fr; }
-  .filtros-bar { grid-template-columns: 1fr 1fr; }
+  .filtros-bar { grid-template-columns: 1fr; gap:10px; padding:12px; }
+  .filtros-bar .filtros-actions { justify-content: center; gap:6px; flex-wrap:wrap }
+  .filtros-bar .filtros-actions .btn { width: auto; min-width: 110px; }
+  .filtros-bar > div { min-width: 100%; }
 }
+
+/* ─── APOSTAS ABERTAS (página dedicada) ───────────────────────────────── */
+.open-bets-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
+.open-bets-header .title { font-family:var(--font-ui); font-size:1.2rem; font-weight:700; color:var(--bright); }
+.open-bets-header .subtitle { color:var(--muted); font-size:.88rem; }
+.open-bets-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:18px; }
+.open-bet-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.015), transparent);
+  border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px; box-shadow: var(--shadow-sm);
+  display:flex; flex-direction:column; gap:14px;
+  font-size: .95rem;
+}
+.open-bet-top { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.open-bet-meta { display:flex; gap:12px; align-items:center; }
+.open-bet-meta .league { font-size:.78rem; color:var(--text2); }
+.open-bet-meta .date { font-size:.78rem; color:var(--muted); }
+.open-bet-odds { font-family:var(--font-ui); font-weight:700; font-size:1.02rem; color:var(--amber); }
+.open-bet-stake { font-weight:700; color:var(--bright); }
+.open-bet-body { display:flex; flex-direction:column; gap:12px; }
+.open-bet-selecao { display:flex; justify-content:space-between; padding:12px; border-radius:8px; background:var(--bg3); border:1px solid var(--border); gap:12px; }
+.open-bet-actions { display:flex; gap:14px; justify-content:flex-start; margin-top:10px; flex-wrap:nowrap; }
+.open-bet-actions .btn { padding:8px 12px; font-size:.82rem; min-width:92px; border-radius:8px; }
+.open-bet-actions .btn.btn-ghost { background: transparent; border:1px solid transparent; }
+.open-bet-actions .btn.btn-primary { background: linear-gradient(180deg,var(--green2),var(--green)); color:#fff; }
+.open-bet-actions .btn.btn-danger { background: linear-gradient(180deg,#8b2b2b,#fb7185); color:#fff; border:1px solid rgba(255,255,255,0.02); }
+.open-bet-actions .btn.btn-secondary { background: var(--bg3); border:1px solid var(--border2); color:var(--text); }
+
+@media (max-width:600px) {
+  .open-bets-grid { grid-template-columns: 1fr; }
+  .open-bet-actions { flex-wrap: wrap; justify-content: center; }
+}
+
+/* Tweak open-bets action buttons to exactly match global buttons but without inner highlights */
+.open-bet-actions .btn {
+  /* match site's button proportions but smaller vertically */
+  padding: 8px 14px !important;
+  border-radius: 10px !important;
+  font-size: .82rem !important;
+  line-height: 1 !important;
+  box-shadow: 0 6px 14px rgba(2,6,23,0.12) !important; /* subtle outer shadow */
+  background-image: none !important; /* remove any layered gradients/highlights */
+  color: inherit;
+  display:inline-flex; align-items:center; justify-content:center;
+}
+.open-bet-actions .btn.btn-primary { background: var(--green2); color: #fff; }
+.open-bet-actions .btn.btn-danger { background: linear-gradient(180deg,#d86b78,#fb7185); color:#fff; }
+.open-bet-actions .btn.btn-warning { background: linear-gradient(180deg,#f2b95a,#f59e0b); color:#111; }
+
+/* Ensure Cashout text centered (some UAs may align differently) */
+.open-bet-actions .btn.btn-warning { text-align:center; }
+
+/* Hover específico para botões na barra de filtros */
+.filtros-bar .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(2,6,23,0.14); }

@@ -9,12 +9,14 @@ async function renderAnalises() {
         <div class="section-sub">Performance detalhada das suas apostas</div>
       </div>
       <div class="flex gap-8" style="align-items:center">
-        <select id="anal-periodo" onchange="renderAnalises()" style="width:auto;padding:6px 10px">
+        <select id="anal-periodo" style="width:auto;padding:6px 10px">
+          <option value="1">Hoje</option>
+          <option value="7">Semana</option>
           <option value="30">Últimos 30 dias</option>
           <option value="90">Últimos 90 dias</option>
           <option value="180">Últimos 6 meses</option>
           <option value="365">Último ano</option>
-          <option value="0">Tudo</option>
+          <option value="-1">Tudo</option>
         </select>
       </div>
     </div>
@@ -22,20 +24,34 @@ async function renderAnalises() {
   `;
 
   setTimeout(async () => {
-    const periodoEl = document.getElementById('anal-periodo');
-    const dias = parseInt(periodoEl?.value || '30');
-    await carregarAnalises(dias);
+      const periodoEl = document.getElementById('anal-periodo');
+      const val = parseInt(periodoEl?.value || '30');
+      const dias = val === -1 ? 0 : val; // -1 => tudo (no filtro)
+      // carregar inicialmente
+      await carregarAnalises(val);
+      // Não re-renderizar toda a view ao mudar o select — só recarregar filtros
+      periodoEl.addEventListener('change', () => {
+        const v = parseInt(periodoEl.value || '30');
+        carregarAnalises(v);
+      });
   }, 50);
 }
 
 async function carregarAnalises(dias) {
   let filtros = {};
-  if (dias > 0) {
+  // dias param can be: -1 (tudo), 1 (hoje), 7 (semana), etc.
+  if (dias === -1) {
+    filtros = {};
+  } else if (dias === 1) {
+    const d = new Date(); filtros.dataInicio = d.toISOString().split('T')[0];
+  } else if (dias > 1) {
     const d = new Date(); d.setDate(d.getDate() - dias);
     filtros.dataInicio = d.toISOString().split('T')[0];
+  } else if (dias === 0) {
+    filtros = {};
   }
 
-  const [apostas, statsEsporte, statsLiga, statsTipo, statsCasa, statsTag, statsConfianca,
+  const [apostas, statsEsporte, statsLiga, statsTipo, statsCasa, statsTag,
          lucroDias, evolucao, heatmap] = await Promise.all([
     buscarApostas(filtros),
     getStatsPorSegmento('esporte'),
@@ -43,8 +59,7 @@ async function carregarAnalises(dias) {
     getStatsPorSegmento('tipo_aposta'),
     getStatsPorSegmento('casa_aposta'),
     getStatsPorSegmento('tag'),
-    getStatsPorSegmento('confianca'),
-    getLucroPorDia(dias || 365),
+    getLucroPorDia(dias > 0 ? dias : 365),
     getEvolucaoBankroll(),
     getMapaCalor()
   ]);
@@ -117,7 +132,7 @@ async function carregarAnalises(dias) {
       <div class="col-12 col-md-6">
         <div class="card shadow-sm">
           <div class="card-body p-3">
-            <h5 class="card-title small mb-3">Evolução do bankroll</h5>
+            <h5 class="card-title small mb-3">Evolução da banca</h5>
             <div class="chart-wrap" style="height:220px"><canvas id="anal-bankroll"></canvas></div>
           </div>
         </div>
@@ -188,15 +203,9 @@ async function carregarAnalises(dias) {
     </div>
 
     <!-- Tag e confiança -->
-    <div class="grid-2 mb-16">
-      <div class="card">
-        <div class="card-title">Performance por tag</div>
-        ${renderTabelaSegmento(statsTag, 'tag')}
-      </div>
-      <div class="card">
-        <div class="card-title">Performance por nível de confiança</div>
-        ${renderTabelaSegmento(statsTag.length ? statsConfianca.sort((a,b)=>Number(a.nome)-Number(b.nome)) : statsConfianca, 'confianca')}
-      </div>
+    <div class="card mb-16">
+      <div class="card-title">Performance por tag</div>
+      ${renderTabelaSegmento(statsTag, 'tag')}
     </div>
 
     <!-- Heatmap -->
@@ -294,7 +303,10 @@ function renderChartsAnalises(apostas, stats, statsEsporte, statsTipo, statsLiga
   destroyChart('anal-tipo-wr');
   const ctx4 = document.getElementById('anal-tipo-wr');
   if (ctx4 && statsTipo.length) {
-    const top = statsTipo.filter(s => s.totalApostas >= 2).slice(0, 8);
+    // Preferir agrupar tipos que tenham nome válido; evitar 'Não informado' como destaque
+    const tiposValidos = statsTipo.filter(s => s.nome && s.nome !== 'Não informado');
+    let top = tiposValidos.filter(s => s.totalApostas >= 2).slice(0, 8);
+    if (top.length === 0) top = statsTipo.filter(s => s.totalApostas >= 2).slice(0, 8);
     window._charts['anal-tipo-wr'] = new Chart(ctx4, {
       type: 'bar',
       data: {

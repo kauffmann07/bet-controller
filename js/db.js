@@ -43,8 +43,31 @@ async function buscarApostas(filtros = {}) {
   const arr = await col.toArray();
 
   return arr.filter(a => {
-    if (filtros.dataInicio && a.data < filtros.dataInicio) return false;
-    if (filtros.dataFim && a.data > filtros.dataFim) return false;
+    // Normalizar comparação de datas: permitir que filtros venham como 'YYYY-MM-DD'
+    // e comparar usando timestamp (incluir todo o dia).
+    if (filtros.dataInicio) {
+      const ai = new Date(a.data).getTime();
+      // Expecting filtros.dataInicio like 'YYYY-MM-DD'
+      if (/^\d{4}-\d{2}-\d{2}$/.test(filtros.dataInicio)) {
+        const [y,mo,da] = filtros.dataInicio.split('-').map(Number);
+        const d0 = new Date(y, mo-1, da, 0,0,0,0).getTime();
+        if (ai < d0) return false;
+      } else {
+        const d0 = new Date(filtros.dataInicio); d0.setHours(0,0,0,0);
+        if (ai < d0.getTime()) return false;
+      }
+    }
+    if (filtros.dataFim) {
+      const ai = new Date(a.data).getTime();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(filtros.dataFim)) {
+        const [y,mo,da] = filtros.dataFim.split('-').map(Number);
+        const d1 = new Date(y, mo-1, da, 23,59,59,999).getTime();
+        if (ai > d1) return false;
+      } else {
+        const d1 = new Date(filtros.dataFim); d1.setHours(23,59,59,999);
+        if (ai > d1.getTime()) return false;
+      }
+    }
     if (filtros.esporte && a.esporte !== filtros.esporte) return false;
     if (filtros.liga && a.liga !== filtros.liga) return false;
     if (filtros.tipo_aposta && a.tipo_aposta !== filtros.tipo_aposta) return false;
@@ -82,10 +105,18 @@ async function getSaldoAtual() {
   const apostas = await db.apostas.toArray();
   const movimentos = await db.bankroll.toArray();
 
+  // Calcular impacto das apostas no saldo atual.
+  // - Apostas pendentes: stake está em risco (subtrair)
+  // - Win: lucratividade = (odd_total - 1) * stake
+  // - Loss: perda = -stake
+  // - Cashout: valor recebido menos stake
   const lucroApostas = apostas.reduce((sum, a) => {
-    if (a.resultado === 'win') return sum + (a.lucro || 0);
-    if (a.resultado === 'loss') return sum - (a.stake || 0);
-    if (a.resultado === 'cashout') return sum + (a.lucro_cashout || 0) - (a.stake || 0);
+    const stake = a.stake || 0;
+    const odd = (a.odd_total || a.odd || 1);
+    if (!a.resultado || a.resultado === 'pendente') return sum - stake;
+    if (a.resultado === 'win') return sum + ((odd - 1) * stake);
+    if (a.resultado === 'loss') return sum - stake;
+    if (a.resultado === 'cashout') return sum + (a.lucro_cashout || 0) - stake;
     return sum;
   }, 0);
 
@@ -216,11 +247,40 @@ async function getEvolucaoBankroll() {
 async function getStatsPorSegmento(campo) {
   const apostas = await buscarApostas();
   const grupos = {};
-  apostas.forEach(a => {
+  // Pré-carregar seleções para garantir que acumuladas tenham suas seleções disponíveis
+  const todasSelecoes = await db.selecoes.toArray();
+  const mapaSelecoes = {};
+  todasSelecoes.forEach(s => { if (!mapaSelecoes[s.aposta_id]) mapaSelecoes[s.aposta_id] = []; mapaSelecoes[s.aposta_id].push(s); });
+
+  for (const a of apostas) {
+    // Para acumuladas, permitir segmentação por esporte/liga usando as seleções persistidas
+    if (a.tipo_registro === 'acumulada' && (campo === 'esporte' || campo === 'liga')) {
+      const sel = mapaSelecoes[a.id] || [];
+      if (sel.length) {
+        sel.forEach(s => {
+          const key = (campo === 'esporte') ? (s.esporte || 'Não informado') : (s.liga || 'Não informado');
+          if (!grupos[key]) grupos[key] = [];
+          const parcelaStake = (a.stake || 0) / sel.length;
+          const pseudo = {
+            id: a.id,
+            original_tipo: a.tipo_registro,
+            esporte: s.esporte || a.esporte,
+            liga: s.liga || a.liga,
+            tipo_aposta: s.tipo_aposta || a.tipo_aposta,
+            odd: s.odd || (a.odd || 0),
+            odd_total: s.odd || (a.odd_total || 0),
+            stake: parcelaStake,
+            resultado: s.resultado || (a.resultado || 'pendente'),
+          };
+          grupos[key].push(pseudo);
+        });
+        continue;
+      }
+    }
     const key = a[campo] || 'Não informado';
     if (!grupos[key]) grupos[key] = [];
     grupos[key].push(a);
-  });
+  }
   return Object.entries(grupos).map(([nome, list]) => ({
     nome,
     ...calcularEstatisticas(list),
@@ -254,13 +314,25 @@ async function exportarJSON() {
 
 async function importarJSON(jsonStr) {
   const dados = JSON.parse(jsonStr);
+  // Importar em ordem: movimentos de banca -> recalcular -> apostas/selecoes -> recalcular
   await db.transaction('rw', db.apostas, db.selecoes, db.bankroll, db.config, async () => {
     await db.apostas.clear(); await db.selecoes.clear();
     await db.bankroll.clear(); await db.config.clear();
+
+    // 1) Restaurar movimentos de banca (depositos/saques)
+    if (dados.bankroll?.length) await db.bankroll.bulkAdd(dados.bankroll);
+    // Disparar recálculo para refletir saldo após movimentos
+    await recalcularBankroll();
+
+    // 2) Restaurar configurações (p.ex. bankroll_inicial)
+    if (dados.config?.length) await db.config.bulkAdd(dados.config);
+
+    // 3) Restaurar apostas e seleções
     if (dados.apostas?.length) await db.apostas.bulkAdd(dados.apostas);
     if (dados.selecoes?.length) await db.selecoes.bulkAdd(dados.selecoes);
-    if (dados.bankroll?.length) await db.bankroll.bulkAdd(dados.bankroll);
-    if (dados.config?.length) await db.config.bulkAdd(dados.config);
+
+    // 4) Recalcular novamente com apostas aplicadas
+    await recalcularBankroll();
   });
 }
 
