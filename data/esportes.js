@@ -17,9 +17,9 @@ const FUTEBOL_LIGAS = [
 ];
 
 const TIMES_FUTEBOL = {
-  'Brasileirão Série A': ['Atlético-MG','Botafogo','Flamengo','Fluminense','Vasco','Palmeiras','São Paulo','Corinthians','Santos','Red Bull Bragantino','Athletico-PR','Grêmio','Internacional','Sport','Fortaleza','Ceará','Bahia','Cruzeiro','Coritiba','Juventude'],
-  'Brasileirão Série B': ['Mirassol','Novorizontino','Goiás','Operário','Chapecoense','Ituano','Ponte Preta','Guarani','CRB','ABC','Paysandu','Remo','Vila Nova','Botafogo-SP','Avaí','Londrina','Tombense','Sampaio Corrêa','Náutico','América-MG'],
-  'Brasileirão Série C': ['Volta Redonda','Figueirense','Ferroviária','CSA','Confiança','Brusque','Manaus','Floresta','Caxias','São José-RS','Athletic Club','Aparecidense','Athletic-MG','Altos','Sousa','Botafogo-PB','Campinense','Castanhal','Tuna Luso','Atlético-CE'],
+  'Brasileirão Série A': ['SE Palmeiras','CR Flamengo','Cruzeiro EC','SC Corinthians','Botafogo FR','Fluminense FC','EC Bahia','Grêmio FBPA','CR Vasco da Gama','Santos FC','RB Bragantino','Atlético Mineiro','São Paulo FC','SC Internacional','Athletico Paranaense','EC Vitória','Coritiba FC','Mirassol FC','Clube do Remo','Chapecoense'],
+  'Brasileirão Série B': ['Fortaleza EC','Sport Recife','EC Juventude','Ceará SC','Goiás EC','Criciúma EC','CRB','Grêmio Novorizontino','Athletic Club','Cuiabá EC','América Mineiro','Atlético Goianiense','Avaí FC','Operário FEC','Vila Nova FC','AA Ponte Preta','Botafogo FC','São Bernardo FC','Londrina EC','Náutico'],
+  'Brasileirão Série C': ['Amazonas FC','Ferroviária','Paysandu SC','Volta Redonda FC','Botafogo FC','Brusque FC','Anápolis FC','Floresta EC','Figueirense FC','AO Itabaiana','SER Caxias do Sul','Ypiranga FC','Ituano FC','AD Confiança','Santa Cruz FC','AA Internacional de Limeira','Maranhão AC','Guarani FC','Maringá FC','Barra FC'],
   'Copa do Brasil': ['Flamengo','Palmeiras','Atlético-MG','São Paulo','Corinthians','Grêmio','Internacional','Fluminense','Botafogo','Cruzeiro'],
   'Premier League': ['Manchester City FC','FC Arsenal','Chelsea FC','FC Liverpool','Tottenham Hotspur','Manchester United FC','Newcastle United','Nottingham Forest','Aston Villa FC','Crystal Palace FC','AFC Bournemouth','Brighton & Hove Albion','Brentford FC','FC Everton','FC Fulham','AFC Sunderland','Leeds United FC','Wolverhampton Wanderers','FC Burnley','Leicester City'],
   'FA Cup': ['Arsenal','Chelsea','Liverpool','Manchester City','Manchester United','Tottenham','Aston Villa','Newcastle'],
