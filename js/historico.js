@@ -291,21 +291,13 @@ async function carregarTabelaHistorico() {
       const lucro = calcLucro(a);
       const isAcum = a.tipo_registro === 'acumulada';
 
-      // Coluna esporte/jogo
+      // Coluna esporte (apenas o esporte, sem detalhes do jogo)
       let esporteCell = '';
       if (isAcum) {
         esporteCell = `<div style="font-size:.72rem;color:var(--text2)">${esportesAcumulada(a)}</div>`;
       } else {
         const emoji = ESPORTES[a.esporte]?.emoji || '';
-        const nomeJogo = (() => {
-          if (a.time_a && a.time_b) return `<span style="font-size:.72rem">${a.time_a} × ${a.time_b}</span>`;
-          if (a.time_a) return `<span style="font-size:.72rem">${a.time_a}</span>`;
-          if (a.jogador) return `<span style="font-size:.72rem">${a.jogador}${a.time_a?' ('+a.time_a+')':''}</span>`;
-          if (a.piloto) return `<span style="font-size:.72rem">${a.piloto}</span>`;
-          if (a.equipe) return `<span style="font-size:.72rem">${a.equipe}</span>`;
-          return '';
-        })();
-        esporteCell = `<div>${emoji} ${ESPORTES[a.esporte]?.nome||a.esporte||'—'}</div>${nomeJogo}`;
+        esporteCell = `<div>${emoji} ${ESPORTES[a.esporte]?.nome||a.esporte||'—'}</div>`;
       }
 
       // Coluna liga/aposta
